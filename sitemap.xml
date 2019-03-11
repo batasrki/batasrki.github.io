@@ -3,6 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://batasrki.github.io/posts/2019-03-10-deploying-elixir-to-digital-ocean/</loc>
+    <lastmod>2019-03-09T22:40:52-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://batasrki.github.io/posts/2017-11-14-game-of-life-in-elixir-and-otp/</loc>
     <lastmod>2017-11-14T23:51:27-05:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -158,7 +165,7 @@
   
   <url>
     <loc>https://batasrki.github.io/</loc>
-    <lastmod>2017-11-14T23:51:27-05:00</lastmod>
+    <lastmod>2019-03-09T22:40:52-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -226,7 +233,7 @@
   
   <url>
     <loc>https://batasrki.github.io/posts/</loc>
-    <lastmod>2017-11-14T23:51:27-05:00</lastmod>
+    <lastmod>2019-03-09T22:40:52-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>

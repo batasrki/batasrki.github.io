@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Deploying Elixir to Digital Ocean</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Deploying Elixir to Digital Ocean" />
+<meta property="og:description" content="Deploying an Elixir/Phoenix app to Digital Ocean This is a quick post on some gotchas I ran into as I was trying to deploy to my DO droplet. At the bottom of the post are the Dockerfile and the build shell script I&rsquo;m using, courtesy of Distillery&rsquo;s documentation, with some modifications.
+Releases and architectures To be fair, there are probably easier ways to get an Elixir app running. I could&rsquo;ve pulled the code from Github and built on the same VM, much like any Ruby app." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://batasrki.github.io/posts/2019-03-10-deploying-elixir-to-digital-ocean/" />
+<meta property="article:published_time" content="2019-03-09T22:40:52-05:00"/>
+<meta property="article:modified_time" content="2019-03-09T22:40:52-05:00"/>
+
+<meta itemprop="name" content="Deploying Elixir to Digital Ocean">
+<meta itemprop="description" content="Deploying an Elixir/Phoenix app to Digital Ocean This is a quick post on some gotchas I ran into as I was trying to deploy to my DO droplet. At the bottom of the post are the Dockerfile and the build shell script I&rsquo;m using, courtesy of Distillery&rsquo;s documentation, with some modifications.
+Releases and architectures To be fair, there are probably easier ways to get an Elixir app running. I could&rsquo;ve pulled the code from Github and built on the same VM, much like any Ruby app.">
+
+
+<meta itemprop="datePublished" content="2019-03-09T22:40:52-05:00" />
+<meta itemprop="dateModified" content="2019-03-09T22:40:52-05:00" />
+<meta itemprop="wordCount" content="796">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Deploying Elixir to Digital Ocean"/>
+<meta name="twitter:description" content="Deploying an Elixir/Phoenix app to Digital Ocean This is a quick post on some gotchas I ran into as I was trying to deploy to my DO droplet. At the bottom of the post are the Dockerfile and the build shell script I&rsquo;m using, courtesy of Distillery&rsquo;s documentation, with some modifications.
+Releases and architectures To be fair, there are probably easier ways to get an Elixir app running. I could&rsquo;ve pulled the code from Github and built on the same VM, much like any Ruby app."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="https://batasrki.github.io/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Deploying Elixir to Digital Ocean</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2019-03-09T22:40:52-05:00">March 9, 2019</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="deploying-an-elixir-phoenix-app-to-digital-ocean">Deploying an Elixir/Phoenix app to Digital Ocean</h2>
+
+<p>This is a quick post on some gotchas I ran into as I was trying to deploy to my DO droplet. At the bottom of the post are the Dockerfile and the build shell script I&rsquo;m using, courtesy of <a href="https://hexdocs.pm/distillery/">Distillery&rsquo;s documentation</a>, with some modifications.</p>
+
+<h2 id="releases-and-architectures">Releases and architectures</h2>
+
+<p>To be fair, there are probably easier ways to get an Elixir app running. I could&rsquo;ve pulled the code from Github and built on the same VM, much like any Ruby app. However, the BEAM ecosystem allows me to build a whole binary, Erlang runtime included, and just sync that up to the server. I don&rsquo;t need to have Erlang installed.</p>
+
+<p>Trouble is, Elixir and Erlang releases must be built on the same computer architecture as the machine I&rsquo;m deploying to. I, currently, do not own a Ubuntu system. Therefore, I had to figure out how to build a release on the Ubuntu architecture from my MacBook Pro. The obvious answer is obviously Docker. I am not as yet comfortable with Docker. I did find a <a href="https://hexdocs.pm/distillery/guides/building_in_docker.html">good tutorial</a> on how to build a release using Docker. It is straightforward, but it will take me time to understand the provided shell script.</p>
+
+<p>I did need to immediately amend the script and Dockerfile, since part of my app uses Phoenix. The Phoenix framework, much like Rails, needs to have its static assets compiled using NodeJS. The Dockerfile therefore has to include an installation NodeJS, and the shell script that&rsquo;s executed in the context of the Docker image needs to invoke the appropriate command.</p>
+
+<h2 id="errors-on-startup">Errors on startup</h2>
+
+<p>Once I had a viable build and had it <code>scp</code>-ing to my DO droplet, I ran the provided start-up script file, <code>bin/&lt;app name&gt; start</code>, only to see the process fail. I still have to figure out how to examine Erlang crash dumps. There&rsquo;s a <a href="http://erlang.org/doc/apps/erts/crash_dump.html">recommended guide</a>, but I haven&rsquo;t gone through it yet. As such, I ran <code>bin/&lt;app_name&gt; console</code> in order to get a REPL going and debug the issue.</p>
+
+<p>This is where I was a bit disappointed. The error, <code>shutdown: failed to start child: &lt;App name&gt;Web.Endpoint</code> on starting up isn&rsquo;t helpful at all. Is the error because I didn&rsquo;t start an application my app depends on? Is it a misconfiguration of some kind? Is it something else? I don&rsquo;t know. I would like to see a more descriptive message, so I can figure out what went wrong. This is especially so as I&rsquo;m new to Elixir. Using the REPL helped out, as figuring out get a more readable output of the crash dump file.</p>
+
+<h3 id="reading-the-output">Reading the output</h3>
+
+<p>One of the really nice things in Erlang is the availability of the <code>observer</code> module. Invoking this module starts up a graphical interface and pulls in statistics from the running system. As a companion, there is a <code>crashdump_viewer</code> module, which allows me to load in the <code>erl_crash.dump</code> file from the filesystem and lets me inspect it through the visual means.</p>
+
+<p>This gave me a clue that I could use to search the internets with. It turns out that I should be starting up applications my app depends on before trying to start mine. I feel that this is a common enough of a mistake that there should be an error message specific to it. Once I included all expected applications, things worked nicely.</p>
+
+<h2 id="thoughts-and-files">Thoughts and files</h2>
+
+<p>In the end, I&rsquo;m happy that I can build a release on my OSX laptop and ship it to my Ubuntu DO droplet without having to install Erlang, Elixir, Hex on the production system.</p>
+
+<p>Here are the <code>Dockerfile</code> and the build script. They&rsquo;re mostly straight from the Distillery&rsquo;s guides, but adjusted to also build static assets for Phoenix.</p>
+
+<pre><code class="language-Dockerfile">FROM ubuntu:16.04
+
+ENV REFRESHED_AT=2019-03-10 \
+    LANG=en_US.UTF-8 \
+    HOME=/opt/build \
+    TERM=xterm
+
+WORKDIR /opt/build
+
+RUN \
+  apt-get update -y &amp;&amp; \
+  apt-get install -y git wget vim locales &amp;&amp; \
+  locale-gen en_US.UTF-8 &amp;&amp; \
+  wget https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb &amp;&amp; \
+  dpkg -i erlang-solutions_1.0_all.deb &amp;&amp; \
+  rm erlang-solutions_1.0_all.deb &amp;&amp; \
+  apt-get update -y &amp;&amp; \
+  apt-get install -y erlang elixir curl &amp;&amp; \
+  curl -sL https://deb.nodesource.com/setup_11.x | bash - &amp;&amp; \
+  apt-get install -y nodejs
+
+CMD [&quot;/bin/bash&quot;]
+
+</code></pre>
+
+<pre><code class="language-Build">#!/usr/bin/env bash
+
+set -e
+
+cd /opt/build
+
+APP_NAME=&quot;$(grep 'app:' mix.exs | sed -e 's/\[//g' -e 's/ //g' -e 's/app://' -e 's/[:,]//g')&quot;
+APP_VSN=&quot;$(grep 'version:' mix.exs | cut -d '&quot;' -f2)&quot;
+
+mkdir -p /opt/build/rel/artifacts
+
+# Install updated versions of hex/rebar
+mix local.rebar --force
+mix local.hex --if-missing --force
+
+export MIX_ENV=prod
+
+# Fetch deps and compile
+mix deps.get --only prod
+# Run an explicit clean to remove any build artifacts from the host
+mix do clean, compile --force
+
+# Build the digest
+cd assets
+node node_modules/brunch/bin/brunch build --production
+cd ..
+mix phx.digest
+
+# Build the release
+mix release --env=prod
+# Copy tarball to output
+cp &quot;_build/prod/rel/$APP_NAME/releases/$APP_VSN/$APP_NAME.tar.gz&quot; rel/artifacts/&quot;$APP_NAME-$APP_VSN.tar.gz&quot;
+
+exit 0
+
+</code></pre>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="https://batasrki.github.io/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>
