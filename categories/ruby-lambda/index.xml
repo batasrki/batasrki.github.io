@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ruby Lambda on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/ruby-lambda/</link>
+    <description>Recent content in Ruby Lambda on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 15 Sep 2015 23:54:19 -0400</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/ruby-lambda/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Passing lambdas as parameters</title>
+      <link>http://example.org/posts/2015-09-15-passing-lambdas-as-parameters/</link>
+      <pubDate>Tue, 15 Sep 2015 23:54:19 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2015-09-15-passing-lambdas-as-parameters/</guid>
+      <description>Background At my current job, I have been working on merchants stores&amp;rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that.</description>
+    </item>
+    
+  </channel>
+</rss>

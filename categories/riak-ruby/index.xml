@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Riak Ruby on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/riak-ruby/</link>
+    <description>Recent content in Riak Ruby on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 23 May 2012 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/riak-ruby/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Riak 2i as a means of querying</title>
+      <link>http://example.org/posts/2013-05-17-riak-2i-as-a-means-of-querying/</link>
+      <pubDate>Wed, 23 May 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-2i-as-a-means-of-querying/</guid>
+      <description>Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair.</description>
+    </item>
+    
+    <item>
+      <title>Riak Search as a means of querying</title>
+      <link>http://example.org/posts/2013-05-17-riak-search-as-a-means-of-querying/</link>
+      <pubDate>Tue, 24 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-search-as-a-means-of-querying/</guid>
+      <description>Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning.</description>
+    </item>
+    
+  </channel>
+</rss>

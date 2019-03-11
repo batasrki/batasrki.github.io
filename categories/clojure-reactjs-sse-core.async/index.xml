@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Clojure Reactjs Sse Core.async on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/clojure-reactjs-sse-core.async/</link>
+    <description>Recent content in Clojure Reactjs Sse Core.async on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 21 Jan 2016 22:01:40 -0500</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/clojure-reactjs-sse-core.async/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Experiments part 9</title>
+      <link>http://example.org/posts/2016-01-21-experiments-part-9/</link>
+      <pubDate>Thu, 21 Jan 2016 22:01:40 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2016-01-21-experiments-part-9/</guid>
+      <description>Previously in Experiments, part 8,&amp;hellip; I got SSE working on the server-side and was happy about that.
+Now&amp;hellip; Tonight, I&amp;rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what ReactDOM.render returns. Does it return the actual component?
+Time for an experiment var component = ReactDOM.</description>
+    </item>
+    
+  </channel>
+</rss>

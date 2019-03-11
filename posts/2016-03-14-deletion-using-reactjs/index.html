@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Deletion using ReactJS</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Deletion using ReactJS" />
+<meta property="og:description" content="Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.
+Client-side first On the client-side, I need add a small form that will submit the DELETE request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2016-03-14-deletion-using-reactjs/" />
+<meta property="article:published_time" content="2016-03-14T00:01:34-04:00"/>
+<meta property="article:modified_time" content="2016-03-14T00:01:34-04:00"/>
+
+<meta itemprop="name" content="Deletion using ReactJS">
+<meta itemprop="description" content="Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.
+Client-side first On the client-side, I need add a small form that will submit the DELETE request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering.">
+
+
+<meta itemprop="datePublished" content="2016-03-14T00:01:34-04:00" />
+<meta itemprop="dateModified" content="2016-03-14T00:01:34-04:00" />
+<meta itemprop="wordCount" content="435">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Deletion using ReactJS"/>
+<meta name="twitter:description" content="Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.
+Client-side first On the client-side, I need add a small form that will submit the DELETE request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Deletion using ReactJS</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2016-03-14T00:01:34-04:00">March 14, 2016</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.</p>
+
+<h2 id="client-side-first">Client-side first</h2>
+
+<p>On the client-side, I need add a small form that will submit the <code>DELETE</code> request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering.</p>
+
+<h3 id="markup">Markup</h3>
+
+<p>Firstly, I am going to amend the <code>Link</code> component to add the delete button.</p>
+
+<pre><code class="language-html">  &lt;div className={&quot;card card-block&quot;}&gt;
+    &lt;h4 className=&quot;card-title&quot;&gt;
+      &lt;a target=&quot;_blank&quot; href={this.props.url}&gt;{this.props.title}&lt;/a&gt;
+      &lt;form onSubmit={this.handleDelete}&gt;
+        &lt;input type=&quot;submit&quot; value=&quot;X&quot;/&gt;
+      &lt;/form&gt;
+    &lt;/h4&gt;
+    &lt;p className=&quot;card-text&quot;&gt;
+      Created by {this.props.client} at {this.props.created_at}
+    &lt;/p&gt;
+  &lt;/div&gt;
+</code></pre>
+
+<p>Following the pattern laid out for submitting new links, I added the simplest of forms to the title part of the link markup. The <code>onSubmit</code> handler is a local function.</p>
+
+<p>The function, much like for link creation will just pass its specific local state up to the root component that will take care of the actual request to the backend.</p>
+
+<pre><code class="language-javascript">handleDelete: function(e) {
+  e.preventDefault();
+  var id = this.props.id;
+  this.props.onLinkDelete({id: id});    
+}
+</code></pre>
+
+<h3 id="event-propagation-the-ugly-way">Event propagation&hellip;the ugly way</h3>
+
+<p>I am certain I&rsquo;m doing things the wrong way, because in order for me to have the root component do the actual communication and state rendering, I have to pass the callback function <em>all the way</em> from root component down to the lowest level.</p>
+
+<pre><code class="language-javascript">var LinkGroup = React.createClass({
+// some code
+  return (&lt;Link onLinkDelete={callback} key={link.id}
+                id={link.id} title={link.title}
+                url={link.url} client={link.client}
+                created_at={link.created_at} /&gt;);
+// more code
+});
+
+var LinkList = React.createClass({
+// some code
+  return(&lt;LinkGroup data={link_group}
+                    onLinkDelete={callback} /&gt;);
+// more code
+});
+
+var LinkListContainer = React.createClass({
+// some code
+  &lt;LinkList data = {this.state.data}
+            onLinkDelete={this.handleLinkDelete} /&gt;
+// more code
+</code></pre>
+
+<p>This works, but I am sure it is <strong>not</strong> the way. I&rsquo;ll have to research more.</p>
+
+<h2 id="the-actual-event-handler">The actual event handler</h2>
+
+<p>Now that I&rsquo;m passing the handler into the correct spot and returning correct data, I&rsquo;m going to write the simplest handler that can possibly work.</p>
+
+<pre><code class="language-javascript">handleLinkDelete: function(data) {
+  $.ajax({
+    url: this.props.url + &quot;/&quot; + data.id,
+    dataType: &quot;json&quot;,
+    contentType: &quot;application/json&quot;,
+    type: &quot;DELETE&quot;,
+    success: function(data) {
+      this.setState({ data: data });
+    }.bind(this),
+    error: function(xhr, status, err) {
+      console.error(this.props.url + &quot;/&quot; + data.id, status, err.toString());
+    }.bind(this)
+  });
+}
+</code></pre>
+
+<p>This is just the simple, standard jQuery-based AJAX call. The server will return the updated atom that the ReactJS will use to re-render the UI.</p>
+
+<p>That&rsquo;s it for tonight. Tomorrow, I&rsquo;m going to hook up the backend.</p>
+
+<h2 id="todo">TODO</h2>
+
+<ol>
+<li>Hook up the backend</li>
+<li>Find a cleaner way to propagate the event to the root component</li>
+</ol>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Implementing a queue using an array</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Implementing a queue using an array" />
+<meta property="og:description" content="Up tonight, I&rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the Data Structures course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.
+Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&rsquo;ll have two pointers that will wrap around to the beginning of the array as needed." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2016-07-05-implementing-a-queue-using-an-array/" />
+<meta property="article:published_time" content="2016-07-05T21:48:39-04:00"/>
+<meta property="article:modified_time" content="2016-07-05T21:48:39-04:00"/>
+
+<meta itemprop="name" content="Implementing a queue using an array">
+<meta itemprop="description" content="Up tonight, I&rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the Data Structures course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.
+Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&rsquo;ll have two pointers that will wrap around to the beginning of the array as needed.">
+
+
+<meta itemprop="datePublished" content="2016-07-05T21:48:39-04:00" />
+<meta itemprop="dateModified" content="2016-07-05T21:48:39-04:00" />
+<meta itemprop="wordCount" content="1140">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Implementing a queue using an array"/>
+<meta name="twitter:description" content="Up tonight, I&rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the Data Structures course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.
+Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&rsquo;ll have two pointers that will wrap around to the beginning of the array as needed."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Implementing a queue using an array</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2016-07-05T21:48:39-04:00">July 5, 2016</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>Up tonight, I&rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the <a href="https://www.coursera.org/learn/data-structures/">Data Structures</a> course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.</p>
+
+<p>Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&rsquo;ll have two pointers that will wrap around to the beginning of the array as needed.</p>
+
+<p>Before I get ahead of myself, though, I&rsquo;m going to do the easy thing first and write a simple implementation in Clojure.</p>
+
+<h2 id="queue-in-clojure-with-a-vector">Queue in Clojure with a vector</h2>
+
+<p>As I said in the <a href="http://batasrki.github.io/blog/2016/06/23/stacks-and-queues/">original post</a>, Clojure has a <code>list</code> data structure that is optimized for pushing items to the front of it and a <code>vector</code> data structure whose optimization is for pushing to the back of it. The latter one sounds perfect for a queue implementation.</p>
+
+<p>As per usual, I&rsquo;m going to store the state in an <code>atom</code>.</p>
+
+<pre><code class="language-clojure">(def my-queue (atom []))
+
+(defn enqueue [item queue]
+  (swap! queue conj item))
+
+(defn dequeue [queue]
+  (let [item (first @queue)]
+    (reset! queue (rest @queue))
+    item))
+
+(defn empty*? [queue]
+  (= [] @queue))
+</code></pre>
+
+<p>Here&rsquo;s the usage of it.</p>
+
+<pre><code class="language-clojure">user&gt; (use 'tester.array-queue :reload)
+nil
+user&gt; my-queue
+#atom[[] 0x1b9ca292]
+user&gt; (enqueue 2 my-queue)
+[2]
+user&gt; (enqueue 21 my-queue)
+[2 21]
+user&gt; (enqueue 1 my-queue)
+[2 21 1]
+user&gt; (empty*? my-queue)
+false
+user&gt; (dequeue my-queue)
+2
+user&gt; (dequeue my-queue)
+21
+user&gt; (dequeue my-queue)
+1
+user&gt; (empty*? my-queue)
+true
+</code></pre>
+
+<p>The implementation is straightforward, eased by the tools built into Clojure. <code>conj</code> pushes to the back of a <code>vector</code>. Using an <code>atom</code> and its interface (<code>swap!</code> and <code>reset!</code>) allows me to easily pop the item off the queue and return it. Making new things in Clojure using the existing things is as simple and enjoyable as advertised.</p>
+
+<h2 id="queue-in-go-using-a-fixed-size-array">Queue in Go using a fixed-size array</h2>
+
+<p>Now, I&rsquo;m going to up the challenge a bit. Go is one of few languages intended to replace C. Well, at least, that&rsquo;s how I look at it. It doesn&rsquo;t have the niceties of other languages similar in age. There are no generics, for example, so there is no generalized data structure interface like there is in Clojure.</p>
+
+<p>There <em>is</em>, however, a nice(-ish) implementation of an array. I&rsquo;m going to try using that to create a queue.</p>
+
+<h3 id="enqueue-first">enqueue first</h3>
+
+<p>Go seems to me to be a verbose language, not due to being overly ceremonious like Java, but because it seems as if it&rsquo;s a DIY language. It gives you some basic stuff, but the rest is up to you. Some like that. I don&rsquo;t know if I do.</p>
+
+<p>Since I have nearly 0 experience in it, my implementation is likely to be circumlocutory (LOL, thesaurus). I&rsquo;m going to split it into two sections: <code>enqueue</code> and <code>dequeue</code>. These are implemented as methods on a <code>struct</code>, so that I can encapsulate the computation of the <code>readIdx</code> and <code>writeIdx</code>. It&rsquo;s kind of OOP in its approach.</p>
+
+<pre><code class="language-go">type ArrayQueue struct {
+  readIdx  int
+  writeIdx int
+  buffer   [4]int
+}
+
+func (aq *ArrayQueue) enqueue(item int) error {
+  newWriteIdx := -1
+  aq.buffer[aq.writeIdx] = item
+
+  if aq.writeIdx == len(aq.buffer)-1 {
+    newWriteIdx = 0
+  } else {
+    newWriteIdx = aq.writeIdx + 1
+  }
+
+  aq.writeIdx = newWriteIdx
+
+  if newWriteIdx == aq.readIdx {
+    return errors.New(&quot;Queue is full&quot;)
+  }
+
+  return nil
+}
+
+</code></pre>
+
+<p>The interesting part here is keeping track of the <code>writeIdx</code> value. Since I&rsquo;m using a fixed size array, I need to detect when I&rsquo;ve moved the <code>writeIdx</code> past the end of the array and reset it to the head. I also need to detect when I&rsquo;ve ran out of space in the array, so that I don&rsquo;t overwrite items in the queue. Here&rsquo;s how that would look.</p>
+
+<pre><code class="language-go">func main() {
+  queueables := [5]int{21, 11, 1, 3, 40}
+  err := interface{}(nil)
+
+  queue := ArrayQueue{readIdx: 0, writeIdx: 0}
+
+  for i := 0; i &lt; len(queueables); i++ {
+    err = queue.enqueue(queueables[i])
+
+    if err != nil {
+      break
+    }
+  }
+  fmt.Println(queue.readIdx, queue.writeIdx, queue.buffer, err)
+}
+</code></pre>
+
+<p>The <code>queueables</code> slice is there just so that I can easily add items to the queue. One o the idioms in Go is to return an error type from a call. I am using that to print out the error when I&rsquo;ve run out of space in my queue.</p>
+
+<p>The <code>fmt.Println</code> outputs things nicely, <code>0 3 [21 11 1 3] Queue is full</code>. Number 40 is not added to the queue, since there is no space left.</p>
+
+<h3 id="on-to-dequeue">on to dequeue</h3>
+
+<p>The above test will only ever enqueue and it&rsquo;ll run out of space quickly. For a queue to be useful, it needs to have items removed, as well. Removing items from a queue needs to update the <code>readIdx</code> pointer value. Having this value be equal to <code>writeIdx</code> would mean that the queue is empty.</p>
+
+<pre><code class="language-go">func (aq *ArrayQueue) dequeue() int {
+  item := aq.buffer[aq.readIdx]
+
+  if aq.readIdx == len(aq.buffer)-1 {
+    aq.readIdx = 0
+  } else {
+    aq.readIdx = aq.readIdx + 1
+  }
+  return item
+}
+</code></pre>
+
+<p>The item is fetched using the existing <code>readIdx</code> value, then calculations are made to ensure that the <code>readIdx</code> also wraps around the end of the array (slice, whatever). This makes implementing <code>peek()</code> and <code>empty()</code> easy.</p>
+
+<pre><code class="language-go">func (aq *ArrayQueue) peek() int {
+  if aq.empty() {
+    return -1
+  }
+
+  return aq.buffer[aq.readIdx]
+}
+
+func (aq *ArrayQueue) empty() bool {
+  return aq.readIdx == aq.writeIdx
+}
+
+</code></pre>
+
+<p>The full test output then looks like this:</p>
+
+<pre><code>$ go build stack_array.go &amp;&amp; ./stack_array
+
+# initial queuing
+0 0 [21 11 1 3] Queue is full
+
+# first dequeue
+21
+
+# writeIdx wrapped around so 40 is now in the first array slot
+# readIdx points to next item, 11
+[40 11 1 3]
+
+# dequeue
+11
+
+# dequeue
+1
+
+# dequeue
+3
+
+# readIdx wraps around and dequeues last item
+40
+
+# peek sees nothing, since queue is empty
+-1 true
+</code></pre>
+
+<h2 id="challenges-and-conclusion">Challenges and conclusion</h2>
+
+<p>It&rsquo;s fairly simple and easy to implement queues and stacks using dynamically-sized backends. Well, at least, it&rsquo;s simple and easy to do the basics. The backend scales up and down as needed and the programmer is left with focusing on the behaviour of each data structure. The tradeoff is that queues and stacks that use dynamically-sized backends (like a linked list) are essentially unbounded. In the worst case scenario, this could cause OoM (Out of Memory) errors on the machine running the implementation.</p>
+
+<p>Writing a basic bounded queue implementation using a circular array has been more challenging. It made me appreciate not just the complexities around keeping track of read and write indexes, but also API design. As the client programmer, I wouldn&rsquo;t want to keep track of that. All I want is to push items onto a queue, remove them from it and check its state. This has been an illuminating exercise.</p>
+
+<p>Onto trees!</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments, part 1</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments, part 1" />
+<meta property="og:description" content="A different tack I&rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
+Continuing my search for that fun high, I started looking at other technologies. I&rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-11-27-experiments/" />
+<meta property="article:published_time" content="2015-11-27T19:50:25-05:00"/>
+<meta property="article:modified_time" content="2015-11-27T19:50:25-05:00"/>
+
+<meta itemprop="name" content="Experiments, part 1">
+<meta itemprop="description" content="A different tack I&rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
+Continuing my search for that fun high, I started looking at other technologies. I&rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be.">
+
+
+<meta itemprop="datePublished" content="2015-11-27T19:50:25-05:00" />
+<meta itemprop="dateModified" content="2015-11-27T19:50:25-05:00" />
+<meta itemprop="wordCount" content="626">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments, part 1"/>
+<meta name="twitter:description" content="A different tack I&rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
+Continuing my search for that fun high, I started looking at other technologies. I&rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments, part 1</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-11-27T19:50:25-05:00">November 27, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="a-different-tack">A different tack</h2>
+
+<p>I&rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?</p>
+
+<p>Continuing my search for that fun high, I started looking at other technologies. I&rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be. In the same vein, ReactJS&rsquo;s approach to building UIs using components fits how I think UIs should be built. As such, I&rsquo;m embarking on a rewrite of my bookmarking site, <a href="http://particletransporter.io">Particle Transporter</a>, using Clojure and ReactJS.</p>
+
+<h2 id="goals">Goals</h2>
+
+<p>The big goals for this rewrite are:</p>
+
+<ol>
+<li>Have a nicer UI for the listing of links than what&rsquo;s on the current site</li>
+<li>Implement a filter (filter by tags to start with)</li>
+<li>Fetch the title of a given link in the background using core.async</li>
+<li>Fetch the first paragraph (if available) of a given link in the background using core.async</li>
+<li>Have an offline mode, to ease development from multiple machines</li>
+</ol>
+
+<p>Having spent a few months at Shopify, I really started liking a UI concept called <a href="http://semantic-ui.com/views/card.html">Cards</a>. It seems to nicely encapsulate a piece of data. This makes it an easy choice for ReactJS, since we can take each saved link and all its data and metadata and wrap it into a card. However, I&rsquo;m getting ahead of myself. Firstly, I&rsquo;m going to set up the environment in which I can create this app.</p>
+
+<p>##Setup</p>
+
+<p>Since this will be a Clojure app, I&rsquo;m going to use <a href="https://github.com/weavejester/compojure">Compojure</a> as the base. Leiningen is a must, obviously, and it provides a template that generates a Compojure-flavoured skeleton.</p>
+
+<pre><code class="language-bash">$ lein new compojure read-later
+$ cd read-later &amp;&amp; ls
+</code></pre>
+
+<p>Cool, the filesystem structure is there. I am going to give it a quick whirl, running <code>lein ring server</code> on the command line within the directory. A few seconds later, I see &ldquo;Hello World&rdquo; in a browser tab.</p>
+
+<p>Now that I have a running server, I&rsquo;m going to add a view that sets up the skeleton of the html page. To do that, I&rsquo;ll install <a href="https://github.com/weavejester/hiccup">Hiccup</a>. It allows me to write views in Clojure, which will then render HTML. Stopping and starting the server using <code>lein</code> will install the newly specified dependency automatically.</p>
+
+<p>OK, next, I need to add the base view and add ReactJS files.</p>
+
+<pre><code class="language-clojure">(ns blog-post-app.views
+  (:require [hiccup.page :refer [html5 include-js include-css]]))
+
+(defn base-page [title &amp; body]
+  (html5
+   [:head
+    (include-css &quot;https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css&quot;)
+    [:title title]]
+   [:body
+    [:div.container-fluid
+     [:h1
+      [:a {:class :brand :href &quot;/&quot;} &quot;Particle Transporter Reborn&quot;]]
+     [:div {:id &quot;content&quot;}]]
+    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react.js&quot;)
+    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react-dom.js&quot;)
+    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js&quot;)
+    (include-js &quot;https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js&quot;)
+    (include-js &quot;/js/core.js&quot;)]))
+
+(defn index []
+  (base-page
+      &quot;Saved Links - fPT&quot;))
+</code></pre>
+
+<p>I am going to reference the views file in the default <code>handler.clj</code> file and adjust the home route to render the HTML page.</p>
+
+<pre><code class="language-clojure">(ns blog-post-app.handler
+  (:require [compojure.core :refer :all]
+            [compojure.route :as route]
+            [blog-post-app.views :as views]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
+
+(defroutes app-routes
+  (GET &quot;/&quot; []
+       (views/index))
+  (route/not-found &quot;Not Found&quot;))
+
+(def app
+  (wrap-defaults app-routes site-defaults))
+</code></pre>
+
+<p>Refreshing the page, I see the header link and an empty page. Checking the console, I see no errors, so all the JS files have been required successfully. Onto the next step, creating a ReactJS view.</p>
+
+<h2 id="reactjs-view">ReactJS view</h2>
+
+<p>The JavaScript file is straightforward to begin with.</p>
+
+<pre><code class="language-javascript">var LinkListContainer = React.createClass({
+  render: function() {
+    return (
+      &lt;section className=&quot;linkListContainer&quot;&gt;
+        &lt;LinkList data = {this.state.data} /&gt;
+      &lt;/section&gt;
+    );
+  }
+});
+
+ReactDOM.render(&lt;LinkListContainer url=&quot;/api/links&quot; /&gt;, document.getElementById(&quot;content&quot;));
+</code></pre>
+
+<p>I specified the top-level component and the child component that will do most of the work. The top-level component is given a URL from which data will be fetched and an HTML element that it should render into.</p>
+
+<p>That&rsquo;s it for part 1. Next, I will specify the data source and render out the links.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

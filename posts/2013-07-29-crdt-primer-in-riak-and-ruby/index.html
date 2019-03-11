@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | CRDT primer in Riak and Ruby</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="CRDT primer in Riak and Ruby" />
+<meta property="og:description" content="Introduction In this post, I shall attempt how to use CRDTs in a Ruby class, backed by the Riak database. CRDT stands for Commutative Replicated Data Type. There is no Wikipedia entry for this, yet, so I&rsquo;m linking to a blog post which is linking to a paper.
+Background CRDTs solve a particular problem well. In a distributed database, like Riak, it is quite possible for a value under a key to receive multiple writes from different clients." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-07-29-crdt-primer-in-riak-and-ruby/" />
+
+
+<meta itemprop="name" content="CRDT primer in Riak and Ruby">
+<meta itemprop="description" content="Introduction In this post, I shall attempt how to use CRDTs in a Ruby class, backed by the Riak database. CRDT stands for Commutative Replicated Data Type. There is no Wikipedia entry for this, yet, so I&rsquo;m linking to a blog post which is linking to a paper.
+Background CRDTs solve a particular problem well. In a distributed database, like Riak, it is quite possible for a value under a key to receive multiple writes from different clients.">
+
+
+
+<meta itemprop="wordCount" content="1542">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="CRDT primer in Riak and Ruby"/>
+<meta name="twitter:description" content="Introduction In this post, I shall attempt how to use CRDTs in a Ruby class, backed by the Riak database. CRDT stands for Commutative Replicated Data Type. There is no Wikipedia entry for this, yet, so I&rsquo;m linking to a blog post which is linking to a paper.
+Background CRDTs solve a particular problem well. In a distributed database, like Riak, it is quite possible for a value under a key to receive multiple writes from different clients."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">CRDT primer in Riak and Ruby</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="0001-01-01T00:00:00Z">January 1, 0001</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="introduction">Introduction</h2>
+
+<p>In this post, I shall attempt how to use CRDTs in a Ruby class, backed by the Riak database. CRDT stands for <a href="http://highscalability.com/blog/2010/12/23/paper-crdts-consistency-without-concurrency-control.html"><strong>Commutative Replicated Data Type</strong></a>. There is no Wikipedia entry for this, yet, so I&rsquo;m linking to a blog post which is linking to a paper.</p>
+
+<h2 id="background">Background</h2>
+
+<p>CRDTs solve a particular problem well. In a distributed database, like Riak, it is quite possible for a value under a key to receive multiple writes from different clients. Now, by default, Riak will discard everything but the latest write. However, it is possible to instruct Riak to keep all conflicting writes, so that we may resolve the conflicts at the application level. Resolving these conflicts can be really hard and this is where CRDTs step in.</p>
+
+<p>It needs to be said that, as with almost everything in software development, whether or not one needs to use these data types depends on one&rsquo;s application and data usage needs. It&rsquo;s quite possible that keeping the last write is all that a developer will ever want.</p>
+
+<p>While the concept itself may be fairly easy to grasp, the implementation of the concept has been a struggle for me. I hope to get more of an understanding, while explaining this topic.</p>
+
+<h2 id="let-s-get-started">Let&rsquo;s get started</h2>
+
+<p>There are a few Ruby gems implementing CRDTs in existence. The most known one is <a href="https://github.com/aphyr/meangirls/tree/master/lib">meangirls</a> by distributed systems extraordinaire, <a href="https://github.com/aphyr">Kyle Kingsbury</a>. We will be using this one, as it seems the most complete.</p>
+
+<blockquote>
+<p>Caveat: the <em>meangirls</em> library isn&rsquo;t gemified, so we will have to include its source. Also, it only takes care of creating the proper JSON representation of various CRDTs it supports. We have to take care of storing the representation, as well as how things are added or removed from a set.</p>
+</blockquote>
+
+<p>Firstly, let&rsquo;s create a directory for the test code and pull down the source code for <em>meangirls</em>.</p>
+
+<pre><code>$ mkdir crdt-test
+$ cd crdt-test
+$ mkdir vendor
+$ git clone git@github.com:aphyr/meangirls.git vendor/
+$ touch Gemfile tester.rb
+</code></pre>
+
+<p>Next, let&rsquo;s add the Ruby Riak client gem and a JSON gem.</p>
+
+<pre><code class="language-ruby">source 'https://rubygems.org'
+
+gem 'yajl-ruby'
+gem 'riak-client'
+</code></pre>
+
+<p>Let&rsquo;s install those and we will be off and running:</p>
+
+<pre><code>$ bundle install
+</code></pre>
+
+<p>OK, with all that set up, let&rsquo;s start playing around with the <em>meangirls</em> library. In this post, I will use the two-phase-set CRDT, but I will add the how-tos for other supported types in later blog posts.</p>
+
+<p>The two-phase-set CRDT is interesting, because it allows us to add and remove things from a set while never actually deleting data. It also prevents re-insertion of deleted elements, which can come in handy.</p>
+
+<p>Let&rsquo;s first set up a playground.</p>
+
+<pre><code class="language-ruby">require_relative 'vendor/lib/meangirls.rb'
+require 'yajl'
+require 'riak'
+
+client = Riak::Client.new(:nodes =&gt; [
+                          {:host =&gt; &quot;33.33.33.11&quot;, :http_port =&gt; 8111},
+                          {:host =&gt; &quot;33.33.33.12&quot;, :http_port =&gt; 8112},
+                          {:host =&gt; &quot;33.33.33.13&quot;, :http_port =&gt; 8113}
+                          ])
+bucket = client.bucket 'meangirls'
+bucket.allow_mult = true
+p bucket.props
+</code></pre>
+
+<p>We load in the library and the two supporting gems. We then hook up to a Riak cluster and create a bucket for our data.</p>
+
+<p>Let&rsquo;s open up irb and write some code.</p>
+
+<pre><code class="language-ruby">require './tester.rb'
+twop_set = Meangirls::TwoPhaseSet.new
+
+twop_set.add :alpha
+ =&gt; #&lt;Meangirls::TwoPhaseSet:0x007fd7549680b0 @a=#&lt;Set: {:alpha}&gt;, @r=#&lt;Set: {}&gt;&gt;
+twop_set.add :beta
+ =&gt; #&lt;Meangirls::TwoPhaseSet:0x007fd7549680b0 @a=#&lt;Set: {:alpha, :beta}&gt;, @r=#&lt;Set: {}&gt;&gt;
+twop_set.to_json
+ =&gt; &quot;{\&quot;type\&quot;:\&quot;2p-set\&quot;,\&quot;a\&quot;:[\&quot;alpha\&quot;,\&quot;beta\&quot;],\&quot;r\&quot;:[]}&quot;
+ twop_set.delete :alpha
+  =&gt; :alpha
+twop_set.to_json
+ =&gt; &quot;{\&quot;type\&quot;:\&quot;2p-set\&quot;,\&quot;a\&quot;:[\&quot;alpha\&quot;,\&quot;beta\&quot;],\&quot;r\&quot;:[\&quot;alpha\&quot;]}&quot;
+ twop_set.add :alpha
+ Meangirls::ReinsertNotAllowed: Meangirls::ReinsertNotAllowed
+  from /Users/spejic/code/crdt-post/vendor/lib/meangirls/two_phase_set.rb:25:in '&lt;&lt;'
+  from (irb):15
+  from /Users/spejic/.rvm/rubies/ruby-2.0.0-p195/bin/irb:16:in '&lt;main&gt;'
+</code></pre>
+
+<p>As we can see, we can add elements to the set, remove elements from the set (by adding them to the remove set), get a JSON representation of the merge between the <em>add</em> and <em>remove</em> sets and we are prevented from re-adding a deleted element to the whole thing. The last part makes sense, because we didn&rsquo;t actually delete the element, it&rsquo;s still there in the <em>add</em> set. How would we add the same element again if we never removed it?</p>
+
+<p>Before explaining why we&rsquo;re using this CRDT, let&rsquo;s first come up with a way to store the data.</p>
+
+<p>Let&rsquo;s create an empty two phase set and store that in Riak.</p>
+
+<pre><code class="language-ruby">twop_set = Meangirls::TwoPhaseSet.new
+data_object = bucket.new
+data_object.raw_data = twop_set.to_json
+data_object.store
+=&gt; #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[], &quot;r&quot;=&gt;[]}&gt;]&gt;
+</code></pre>
+
+<p>OK, the set is stored. One of the usual patterns used while developing Riak-backed applications is to store the keys in something like Redis or memcache. This allows the developers to access the data quickly, since key-based access is the fastest type of data access in Riak.</p>
+
+<p>However, this also opens up the possibility that two distinct sets of data will be written to the same key. This is exactly what a CRDT aims to prevent.</p>
+
+<p>Let&rsquo;s simulate that possibility and see how <em>meangirls</em> handles it.</p>
+
+<pre><code class="language-ruby">fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+
+# fetch another object
+another_fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+
+# make sets
+set_from_first = Meangirls::TwoPhaseSet.new(fetch_object.data)
+set_from_second = Meangirls::TwoPhaseSet.new(another_fetch_object.data)
+
+# add data to each set
+set_from_first.add(:alpha)
+set_from_second.add(:bravo)
+
+# serialize each set back
+fetch_object.raw_data = set_from_first.to_json
+fetch_object.store
+
+another_fetch_object.raw_data = set_from_second.to_json
+another_fetch_object.store
+
+# fetch the conflicts and merge them
+fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+fetch_object.conflict?
+=&gt; true
+
+conflicted_parts = fetch_object.siblings.map do |sibling|
+  Meangirls::TwoPhaseSet.new(sibling.data)
+end
+=&gt; [#&lt;Meangirls::TwoPhaseSet:0x0000000309d898 
+            @a=#&lt;Set: {&quot;beta&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
+    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
+
+resolved = conflicted_parts.first.merge(conflicted_parts.last)
+=&gt; #&lt;Meangirls::TwoPhaseSet:0x00000003501c90
+    @a=#&lt;Set: {&quot;beta&quot;, &quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;
+
+# write the merged object back
+resolved_data_object = Riak::RObject.new(bucket, fetch_object.key)
+resolved_data_object.raw_data = resolved.to_json
+resolved_data_object.content_type = &quot;application/json&quot;
+
+fetch_object.siblings = [resolved_data_object]
+fetch_object.store
+</code></pre>
+
+<p>We did a few things here, so let&rsquo;s break it down. Firstly, fetching the same object out of Riak twice will ensure that we have to references to the same <strong>vector clock</strong> value. <a href="http://docs.basho.com/riak/latest/theory/concepts/Vector-Clocks/">Vector clocks</a> are how a distributed system like Riak keeps track of object updates in the system.</p>
+
+<p>Having the same vector clock on 2 in-memory instances of our Riak object means that were both of them to write updates to that object, we would have a conflict. The default way Riak handles conflicts is by using the <em>last write wins</em> strategy, which is determined by the timestamp of the write coming into the system. All previous writes are discarded in that case, potentially losing information.</p>
+
+<p>However, since we set our bucket to allow multiple values for an object, Riak will instead keep all conflicts and present us with them.</p>
+
+<p>This is exactly the scenario we follow. We add an item to each set and write both sets back using our 2 in-memory references. Riak sees the conflict, but keeps both writes.</p>
+
+<p>Upon the next read, we are presented with those conflicts. The Ruby client for Riak does a nice thing here and keeps things coherent by encapsulating those conflicts into the <em>Riak::RObject</em> instance.</p>
+
+<p>Accessing any field on this conflicted instance before resolving the conflicts will result in an exception, forcing us to resolve the conflicts before proceeding.</p>
+
+<pre><code class="language-ruby">fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+fetch_object.conflict?
+=&gt; true
+fetch_object.data
+#=&gt; Riak::Conflict: The object is in conflict (has siblings) and cannot be treated singly or saved: #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[&quot;beta&quot;], &quot;r&quot;=&gt;[]}&gt;, #&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[&quot;alpha&quot;], &quot;r&quot;=&gt;[]}&gt;]&gt;
+  from /home/srdjan/.rvm/gems/ruby-2.0.0-p195@crdt-post/gems/riak-client-1.2.0/lib/riak/robject.rb:169:in `content'
+  from (irb):91
+  from /home/srdjan/.rvm/rubies/ruby-2.0.0-p195/bin/irb:13:in `&lt;main&gt;'
+</code></pre>
+
+<p>So, we have conflicts and need to resolve them. The conflicted objects are presented as a collection of <em>siblings</em>. We loop through the collection and create <em>TwoPhaseSet</em> objects out of each one and add them to a collection of their own. We only have 2 conflicts here, so I cheated a bit on how they merge together, but I hope that the intent is clear.</p>
+
+<pre><code class="language-ruby">conflicted_parts = fetch_object.siblings.map do |sibling|
+  Meangirls::TwoPhaseSet.new(sibling.data)
+end
+=&gt; [#&lt;Meangirls::TwoPhaseSet:0x0000000309d898 
+            @a=#&lt;Set: {&quot;beta&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
+    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
+
+resolved = conflicted_parts.first.merge(conflicted_parts.last)
+=&gt; #&lt;Meangirls::TwoPhaseSet:0x00000003501c90
+    @a=#&lt;Set: {&quot;beta&quot;, &quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;
+
+</code></pre>
+
+<p>The last part of the conflict resolution is tricky and under-documented. I only have two tweets from <a href="https://twitter.com/seancribbs">Sean Cribbs</a> to go on.</p>
+
+<blockquote>
+<p>@batasrki @davidannweiser No, just return the same object, with siblings resolved. Best not to immediately write back though</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>@batasrki RObject.siblings = [ resolved_content_object ]</p>
+</blockquote>
+
+<p>I, honestly, could not find any other information on this part, so what I&rsquo;m presenting is probably not the best way. It does work, however.</p>
+
+<pre><code class="language-ruby"># write the merged object back
+resolved_data_object = Riak::RObject.new(bucket, fetch_object.key)
+resolved_data_object.raw_data = resolved.to_json
+resolved_data_object.content_type = &quot;application/json&quot;
+
+fetch_object.siblings = [resolved_data_object]
+fetch_object.store
+</code></pre>
+
+<p>What we&rsquo;re doing here is creating a new <em>Riak::RObject</em> instance, but setting its key to be the same as the conflicted object. This ensures that we update the data in Riak rather than create a new copy of it.</p>
+
+<p>We then set that object&rsquo;s <em>raw_data</em> property to the resolved set we created earlier and its <em>content type</em> to JSON. We don&rsquo;t store this object, instead we overwrite the conflicted object&rsquo;s siblings collection with a list of size 1 containing the new object.</p>
+
+<p>We then store the conflicted object back into Riak. If we pull this data from Riak subsequently, we will see the updated, resolved set store and no conflicts.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>So, there we have it. This is a first in a few posts on how to use CRDTs to resolve conflicts in an eventually consistent system. This is a powerful technique (pattern?), especially when using a distributed database like Riak.</p>
+
+<p>In the next post, I will attempt to use the 2-phase set to resolve conflicts in richer JSON documents like user records.</p>
+
+<p>In posts after that one, I will explore the other provided data types in the <strong>Meangirls</strong> library.</p>
+
+<p>Until next time, please watch Kyle Kingsbury&rsquo;s excellent Ricon East video on what happens in distributed databases when CRDTs aren&rsquo;t used, <a href="http://www.youtube.com/watch?v=mxdpqr-loyA">Call me maybe</a>.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

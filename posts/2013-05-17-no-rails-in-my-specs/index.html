@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | No Rails in my specs</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="No Rails in my specs" />
+<meta property="og:description" content="tl; dr Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:
+A different way of writing specs, especially controller ones There is overhead due to having to handle requires on your own These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-05-17-no-rails-in-my-specs/" />
+<meta property="article:published_time" content="2011-12-07T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2011-12-07T00:00:00&#43;00:00"/>
+
+<meta itemprop="name" content="No Rails in my specs">
+<meta itemprop="description" content="tl; dr Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:
+A different way of writing specs, especially controller ones There is overhead due to having to handle requires on your own These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long.">
+
+
+<meta itemprop="datePublished" content="2011-12-07T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2011-12-07T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="2289">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="No Rails in my specs"/>
+<meta name="twitter:description" content="tl; dr Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:
+A different way of writing specs, especially controller ones There is overhead due to having to handle requires on your own These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">No Rails in my specs</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2011-12-07T00:00:00Z">December 7, 2011</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h4 id="tl-dr">tl; dr</h4>
+
+<p>Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:</p>
+
+<p>A different way of writing specs, especially controller ones
+There is overhead due to having to handle requires on your own
+These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long.</p>
+
+<p>Since my models are <strong>not</strong> subclasses of ActiveRecord::Base, I am unaware of what additional work is involved. Hat tip to <a href="https://twitter.com/duwanis">Tommy Morgan</a> for bringing up that concern.</p>
+
+<h4 id="introduction">Introduction</h4>
+
+<p>So, last night, I tweeted my amazement at a massive performance improvement while running specs for a Rails app I’m building. A few people have asked if I could write down my thoughts, so here they are.</p>
+
+<p>First, though, a little bit of background. This after-hours app of mine is a bank account analysis web application. Basically, I wanted to be able to see at a glance what my wife and I are spending money on, how much of it and to eventually come up with a prediction model based on past financial history. Also, I’m treating this application as a non-trivial testbed of technologies and techniques. For example, the data store is <a href="http://basho.com/riak/">Riak</a> and I am splitting the application up into services. Currently, I have two parts:
+1. A <a href="http://sinatrarb.com">Sinatra-powered</a> API service for querying the data and importing new source data
+2. A thin <a href="http://rubyonrails.org">Rails</a> client whose sole job is presenting the query results from the API service to the end user</p>
+
+<h4 id="initial-assessment">Initial assessment</h4>
+
+<p>So, the Rails client is running on Ruby 1.9.3 and Rails 3.1.3, while <a href="https://github.com/dbalatero/typhoeus">Typhoeus 0.3.3</a> is my HTTP library of choice. For testing, I’m using RSpec 2.7.0. It’s important that I note the versions here, because things may change for the better. I used test-first methodology to drive out the initial iteration of the client, based on a few requirements I jotted down on a piece of paper. I deliberately skipped creating ActiveRecord (or any other ORM) models and I went with straight-up Ruby objects. After all, the data store for the client is the API service, so I didn’t see the need to duplicate the data store part here.</p>
+
+<p>While the model part is not the usual Rails fare, the controller and view parts are pretty standard with some modern techniques, like using presenters/decorators instead of helpers, mixed in. I wrote the controller and model specs in the usual way, mocking out the API response in the controller and letting the model specs hit the API service like they would in the production mode.</p>
+
+<p>When I ran the suite of 30 specs, I was flabbergasted to see the suite take 9 seconds to run. The specs ran fairly fast and most of the time seemed to be spent loading up the environment. This run time surprised me, because the entire Ruby universe on Twitter kept saying how much better 1.9.3 was at loading up the Rails environment than 1.9.2. I can only imagine how long this would’ve taken to run using 1.9.2. To me, 9 seconds for each spec suite run is unacceptable. To hell with premature optimization, this was an issue right now and it’d be better if I solved it while I only have 30 specs.</p>
+
+<h4 id="spork">Spork</h4>
+
+<p>As usual, the first tool I reach for when trying to improve the run time of a spec suite is Spork. It’s a well-known and trusted tool among Rails people and I’ve used it before. A quick gem install later, followed by the bootstrap and I’m off and running.</p>
+
+<p>Originally, my spec_helper.rb file looked like this:</p>
+
+<p>{% codeblock lang:ruby %}
+require &lsquo;rubygems&rsquo;
+require &lsquo;spork&rsquo;</p>
+
+<p>Spork.prefork do
+end</p>
+
+<p>Spork.each_run do
+  # This code will be run each time you run your specs.
+end
+ENV[&ldquo;RAILS_ENV&rdquo;] ||= &lsquo;test&rsquo;
+require File.expand_path(&ldquo;../../config/environment&rdquo;, <strong>FILE</strong>)
+require &lsquo;rspec/rails&rsquo;
+require &lsquo;rspec/autorun&rsquo;</p>
+
+<h1 id="requires-supporting-ruby-files-with-custom-matchers-and-macros-etc">Requires supporting ruby files with custom matchers and macros, etc,</h1>
+
+<h1 id="in-spec-support-and-its-subdirectories">in spec/support/ and its subdirectories.</h1>
+
+<p>Dir[Rails.root.join(&ldquo;spec/support/*<em>/</em>.rb&rdquo;)].each {|f| require f}</p>
+
+<p>RSpec.configure do |config|
+  config.mock_with :rspec
+  config.infer_base_class_for_anonymous_controllers = false
+end
+{% endcodeblock %}</p>
+
+<p>I moved everything into the <strong>Spork.prefork</strong> block and left the <strong>Spork.each_run</strong> block empty. This worked immediately dropping my run time from 9 seconds (well, after the initial 8 second load time) to 0.8 seconds. I cannot emphasize how big a win Spork is early in the life of a project. I mean, 2 minutes of work has shaved off a tonne of time. However, this wasn’t without its issues.</p>
+
+<p>The big issue I ran into almost right away was that the changes to my model classes weren’t being applied between runs. This is a rhythm-killer for me. I had to stop and reload spork every time I changed a model class, paying the 8 second load penalty. Controller specs weren’t affected, so I suspect that this had something to do with the fact that my model classes weren’t subclassing ActiveRecord::Base. A bit of googling later, my spec_helper file became this:</p>
+
+<p>{% codeblock lang:ruby %}
+require &lsquo;rubygems&rsquo;
+require &lsquo;spork&rsquo;</p>
+
+<p>Spork.prefork do
+  # Loading more in this block will cause your tests to run faster. However,
+  # if you change any configuration or code from libraries loaded here, you&rsquo;ll
+  # need to restart spork for it take effect.
+  ENV[&ldquo;RAILS_ENV&rdquo;] ||= &lsquo;test&rsquo;
+  require File.expand_path(&ldquo;../../config/environment&rdquo;, <strong>FILE</strong>)
+  require &lsquo;rspec/rails&rsquo;
+  require &lsquo;rspec/autorun&rsquo;
+  Dir[Rails.root.join(&ldquo;spec/support/*<em>/</em>.rb&rdquo;)].each {|f| require f}
+  RSpec.configure do |config|
+    config.mock_with :rspec
+    # If true, the base class of anonymous controllers will be inferred
+    # automatically. This will be the default behavior in future versions of
+    # rspec-rails.
+    config.infer_base_class_for_anonymous_controllers = false
+  end
+end</p>
+
+<p>Spork.each_run do
+  Dir[&ldquo;#{Rails.root}/app/controllers//<em>.rb&rdquo;].each do |controller|
+    load controller
+  end
+  Dir[&ldquo;#{Rails.root}/app/models//</em>.rb&rdquo;].each do |model|
+    load model
+  end
+  Dir[&ldquo;#{Rails.root}/app/models/api/<em>.rb&rdquo;].each do |model|
+    load model
+  end
+  Dir[&ldquo;#{Rails.root}/app/presenters//</em>.rb&rdquo;].each do |presenter|
+    load presenter
+  end
+end
+{% endcodeblock %}</p>
+
+<p>I was annoyed that I had to do that, but it worked as advertised so I moved on.</p>
+
+<h4 id="to-the-extreme">To the extreme</h4>
+
+<p>The immediate annoyance I encountered with this setup is the new process I had to adopt. In order to write new specs, I had to do the following:
+1. Start up the API service, complete with the database start-up
+2. Start up spork, wait 8 seconds
+3. Run the existing specs
+4. Write a new one and cycle</p>
+
+<p>Now, I realize that there is a gem out there, <a href="https://github.com/guard/guard">guard</a>, which will automate steps 2 and 3 for me. However, this is a thin Rails client with minimally few moving parts and I didn’t feel like repeating the incantations needed to set up guard properly. Moreover, step 1 is still something I have to do manually, so the win with guard isn’t as big.</p>
+
+<p>Furthermore, forgetting to start guard or spork will cause me to get frustrated, while I wait the ~9 seconds it will take to run the suite plus the usual 8 second load time when I do start spork up. I just want to run <strong>rspec spec/</strong>, for crying out loud.</p>
+
+<p>I had heard of Corey Haines’ presentation on <a href="http://confreaks.net/videos/641-gogaruco2011-fast-rails-tests">fast rails tests</a> where he essentially removes Rails from the spec suite runtime. There were also a few blog posts around the same issue. I figured I had nothing to lose trying out this approach, since my Rails client isn’t a “real”™ Rails application.</p>
+
+<p>So, I removed:</p>
+
+<p>{% codeblock lang:ruby%}
+require &lsquo;spec_helper&rsquo;
+{% endcodeblock %}</p>
+
+<p>from every spec file I had and set about fixing all of the errors that popped up. What I came up with within an hour is this:</p>
+
+<p>{% codeblock lang:ruby %}
+APP_ROOT = File.expand_path(File.join(File.dirname(<strong>FILE</strong>), &lsquo;..&rsquo;))
+$: &lt;&lt; File.join(APP_ROOT, &ldquo;app&rdquo;, &ldquo;controllers&rdquo;) &lt;&lt; File.join(APP_ROOT, &ldquo;app&rdquo;, &ldquo;models&rdquo;) &lt;&lt; File.join(APP_ROOT, &ldquo;app&rdquo;, &ldquo;presenters&rdquo;)</p>
+
+<p>module ActionController
+  class Base
+    def self.protect_from_forgery; end
+    def params; {}; end
+  end
+end</p>
+
+<p>require &lsquo;active_support/core_ext/string/inflections&rsquo;
+require &lsquo;date&rsquo;
+require &lsquo;vcr_setup&rsquo;
+require &lsquo;application_controller&rsquo;
+require &lsquo;transactions_controller&rsquo;
+require &lsquo;categories_controller&rsquo;
+require &lsquo;api/transaction&rsquo;
+require &lsquo;transaction_collection&rsquo;
+require &lsquo;transaction&rsquo;
+require &lsquo;category_formatter&rsquo;</p>
+
+<p>def assigns(name)
+  controller.instance_variable_get &ldquo;@#{name}&rdquo;
+end</p>
+
+<p>RSpec.configure do |config|
+  config.mock_with :rspec
+end
+{% endcodeblock %}</p>
+
+<p>As you’ll note, the spec_helper file is pretty different when compared to a regular one, no surprise there. I used the setup from this blog post, <a href="http://www.adomokos.com/2011/04/running-rails-rspec-tests-without-rails.html">Running Rails Rspec Tests - Without Rails</a> and an inspiration from this <a href="https://gist.github.com/1294164">gist</a> with a few modifications.</p>
+
+<p>As the blog post explains in detail, requiring Rails is the thing that kills the startup time of the spec suite. I don’t think it’s a big revelation, but it’s one worth repeating. If you want really fast Rails tests, <strong>remove RAILS!</strong></p>
+
+<p>The above code monkey-patches <strong>ActionController::Base</strong> and provides a dummy implementation of a few methods to ensure that ApplicationController and its subclasses don’t blow up. After adding the paths to various parts of the app to the load path (that’s the <strong>$:</strong> thingie), requiring the various classes and defining a helper method, we’re pretty much done.</p>
+
+<p>There are a few other things I needed to explicitly require after ripping out Rails, namely the <strong>date</strong> library from Ruby’s stdlib and the <strong>inflector</strong> from ActiveSupport that is used in the presenter spec.</p>
+
+<p>The controller specs look like this now:</p>
+
+<p>{% codeblock lang:ruby %}
+require &lsquo;spec_helper&rsquo;</p>
+
+<p>describe TransactionsController do</p>
+
+<p>describe &ldquo;GET &lsquo;index&rsquo;&rdquo; do
+    let(:controller) { TransactionsController.new}
+    before do
+      builder = TransactionCollection.new
+      parsed_json = [{&ldquo;key12&rdquo; =&gt;{:category =&gt; &ldquo;insurance&rdquo;, :amount =&gt; 332}}]
+      API::Transaction.stub!(:transactions_for).with(&ldquo;insurance&rdquo;).and_return(parsed_json)
+    end</p>
+
+<pre><code>it &quot;has a category assigned&quot; do
+  controller.class.send(:define_method, :params) do
+    {:category_id =&gt; &quot;insurance&quot;}
+  end
+  controller.index
+  assigns(&quot;category&quot;).should_not be_nil
+end
+
+it &quot;returns a set of transactions&quot; do
+  controller.class.send(:define_method, :params) do
+    {:category_id =&gt; &quot;insurance&quot;}
+  end
+  controller.index
+  transactions = assigns(&quot;transactions&quot;)
+  transactions.first.key.should eql &quot;key12&quot;
+end
+
+it &quot;returns an empty array when there are no transactions for the category&quot; do
+  controller.class.send(:define_method, :params) do
+    {:category_id =&gt; &quot;testme&quot;}
+  end
+  API::Transaction.stub!(:transactions_for).with(&quot;testme&quot;).and_return([])
+  controller.index
+  assigns(&quot;transactions&quot;).should eql []
+end
+</code></pre>
+
+<p>end
+end
+{% endcodeblock %}</p>
+
+<p>Disregarding the duplication setup that I left in there, the invocation of the <strong>index</strong> action in the <strong>TransactionsController</strong> is really not that much different from how it’s normally done. The duplicated part sets up the params hash with the expected key/value pair.</p>
+
+<p>The model specs have not changed while I was ripping stuff apart, which made me really happy.</p>
+
+<h4 id="vcr">VCR</h4>
+
+<p>The eagle-eyed among you, might have noticed this line in the spec_helper:</p>
+
+<p>{% codeblock lang:ruby %}
+require &lsquo;vcr_setup&rsquo;
+{% endcodeblock %}</p>
+
+<p>After I got the suite running, I noticed that what was previously 0.8 seconds with spork was now consistently around 2 seconds. The only cause for this slow down were the model specs that hit the API service. Looking through <a href="https://twitter.com/avdi">Avdi Grimm&rsquo;s</a> blog posts and various podcast appearances, I came upon the <a href="https://github.com/myronmarston/vcr">VCR</a> gem.</p>
+
+<p>What this gem does is records the HTTP requests your specs make in the course of a run, stores the results of said call into a YAML file to which you can give a name, cuts off HTTP access to your specs and returns the contents of each YAML file made as if the spec still made that HTTP request. I think showing a bit of code may explain this better than words:</p>
+
+<p>{% codeblock lang:ruby %}
+it &ldquo;should return a set of categories&rdquo; do
+  VCR.use_cassette(&ldquo;built-in categories&rdquo;) do
+    API::Transaction.categories.should_not be_empty
+  end
+end
+{% endcodeblock %}</p>
+
+<p>As you can see, I’ve named this cassette “built-in categories” which will cause VCR to store a YAML file named <em>built_in_categories.yml</em> under the <strong>spec/vcr_cassettes</strong> directory. On the first run after install, VCR will execute the HTTP request inside the <em>use_cassette</em> block and save the result, replaying it with every subsequent run. There are options available to let you control if and when these cassettes should expire, as well as many more. The documentation is <a href="https://relishapp.com/myronmarston/vcr">here</a>.</p>
+
+<p>This library is an absolute gem (pardon the pun). It works as advertised and extremely smoothly. Even things that weren’t well-documented, but seemed like they should work, did. For example, if you’re executing an HTTP request in a before block for multiple spec runs, the same syntax applies and works. I am thoroughly impressed with this gem, as is Avdi.</p>
+
+<h4 id="the-long-awaited-payoff">The long-awaited payoff</h4>
+
+<p>So, why go through all of this? If you’re asking yourself that, don’t worry, I’ve asked myself the same. For me, there are a few big wins.</p>
+
+<p>Firstly, the speed. Repeated full suite runs clock in at 0.5 seconds (I said 0.7 on Twitter, but I was wrong). That’s right, it takes me <strong>half a second</strong> to run all the specs, the controller ones, the model ones and the presenter ones. When I compare this to the initial run of 9 seconds in total, I grin.</p>
+
+<p>Secondly, spork is now out of the picture. For me, this is a huge relief on mental load. The process that I outlined above is reduced to steps 3 and 4. I can type in <strong>rspec spec/</strong>, note any failures I left for myself from the night before, make the specs pass, refactor and move. The rhythm is back and it’s the rhythm that makes me productive.</p>
+
+<p>This is does not imply that spork sucks. Installing spork, modifying the spec_helper, firing spork up and testing is a very legitimate way of improving spec suite run time. I’ve outlined why I don’t like this process, but I’m not ever going to argue against it if it works for you.</p>
+
+<p>I wanted to prove to myself that it’s possible to have Rails specs without Rails. Having an unusual use case helped push me down this path. It is possible and, as of right now, it isn’t that much work. <strong>I do not know if this approach scales, though</strong>. I need to emphasize that point. I may come back a few months down the road saying that this is too much work. I don’t know.</p>
+
+<p>What I do know is that it’s been a worthwhile experiment and I hope that documenting it in this way will help someone else, as well. Good luck.</p>
+
+<p>Props and fist bumps go to <a href="https://twitter.com/duwanis">Tommy Morgan</a> for proof-reading, <a href="https://twitter.com/tcollen">Tony Collen</a> for the gist and the blog post link and <a href="https://twitter.com/myronmarston">Myron Marston</a> for the VCR gem.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

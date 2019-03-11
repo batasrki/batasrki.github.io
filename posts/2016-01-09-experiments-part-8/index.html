@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 8</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 8" />
+<meta property="og:description" content="Previously in Experiments, part 7,&hellip; I switched from Compojure to Pedestal in order to take advantage of its support for Server-sent Events. I want to use that to send background updates to the client on completion of a task.
+This took a while I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2016-01-09-experiments-part-8/" />
+<meta property="article:published_time" content="2016-01-09T23:20:30-05:00"/>
+<meta property="article:modified_time" content="2016-01-09T23:20:30-05:00"/>
+
+<meta itemprop="name" content="Experiments part 8">
+<meta itemprop="description" content="Previously in Experiments, part 7,&hellip; I switched from Compojure to Pedestal in order to take advantage of its support for Server-sent Events. I want to use that to send background updates to the client on completion of a task.
+This took a while I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing.">
+
+
+<meta itemprop="datePublished" content="2016-01-09T23:20:30-05:00" />
+<meta itemprop="dateModified" content="2016-01-09T23:20:30-05:00" />
+<meta itemprop="wordCount" content="1447">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 8"/>
+<meta name="twitter:description" content="Previously in Experiments, part 7,&hellip; I switched from Compojure to Pedestal in order to take advantage of its support for Server-sent Events. I want to use that to send background updates to the client on completion of a task.
+This took a while I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 8</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2016-01-09T23:20:30-05:00">January 9, 2016</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-7-https-batasrki-github-io-blog-2015-12-21-experiments-part-7">Previously in <a href="https://batasrki.github.io/blog/2015/12/21/experiments-part-7">Experiments, part 7</a>,&hellip;</h2>
+
+<p>I switched from <a href="https://github.com/weavejester/compojure">Compojure</a> to <a href="https://github.com/pedestal/pedestal">Pedestal</a> in order to take advantage of its support for <a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-sent Events</a>. I want to use that to send background updates to the client on completion of a task.</p>
+
+<h2 id="this-took-a-while">This took a while</h2>
+
+<p>I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing.</p>
+
+<p>SSE integration did not go like that. Not at all. It&rsquo;s mostly my fault, because I did not fully understand how the whole feature works. However, I do have to also blame Pedestal&rsquo;s SSE guides. Firstly, the guides section does not align with the examples section. Secondly, their example of an SSE usage is the epitome of useless blog post code. I don&rsquo;t know if I have the permission to copy the code here, so I&rsquo;ll <a href="https://github.com/pedestal/pedestal/blob/master/guides/documentation/service-sse.md">link to it</a>.</p>
+
+<p>The problem with this example is that this isn&rsquo;t how I expect <em>anyone</em> to use the SSE support. This code generates 20 events on the server and sends them one by one down to the client, one second apart. It then closes the channel. It&rsquo;s concise, but it doesn&rsquo;t help <strong>at all</strong>. Some of the questions I had when I looked at this code were:</p>
+
+<ol>
+<li>Uh, can I have the implementation in a function in another namespace?</li>
+<li>Can I use data from a <code>core.async</code> channel?</li>
+<li>If so, how?</li>
+</ol>
+
+<p>My first crack at this nearly worked. By nearly, I mean, I got the first event as expected, which was great! Submitting the second link gave me no event back in the browser. It took me a better part of 2 weeks to figure out just what the hell is the problem.</p>
+
+<h2 id="in-the-beginning">In the beginning&hellip;</h2>
+
+<p>I want to try and re-construct this painful process, because I truly believe that others will get snagged on this rough edge in Pedestal. Maybe, just maybe, providing a failure case and a solution in this <del>widely</del> blog series will help someone somewhere.</p>
+
+<p>Adapting the code from the guide I linked above, I end up with something roughly like this:</p>
+
+<pre><code class="language-clojure">;; Add another channel to the set there already.
+;; This channel will receive the link with the title applied
+;; It will then forward that onto the SSE channel completing the pipeline
+(def update-chan (chan))
+
+;; Put the record on the channel after processing it
+(defn update-atom []
+  (go
+   (let [record (&lt;! title-chan)]
+     (log/trace &quot;Got title&quot; (:title record))
+     (log/trace &quot;Updating the atom&quot;)
+     (swap! links update-title record)
+     (&gt;! update-chan record))))
+
+;; SSE functions as I understand them being needed
+
+;; This one does the actual work
+(defn stream-link-updates [channel]
+  (go
+   (let [record (&lt;! update-chan)]
+     (&gt;! channel {:name &quot;link-update&quot; :data (json/write-str record)}))))
+
+;; This one is called by the route setup below and is the inital point into the whole thing
+(defn stream-ready [channel ctx]
+  (stream-link-updates channel))
+
+;; This is added to `defroutes` to set up a SSE streaming
+[&quot;/stream&quot; {:get [::stream (sse/start-event-stream stream-ready)]}]
+</code></pre>
+
+<p>This is the server-side implementation <em>as I understand it</em> and how I would like it to fit into my app. Since <code>core.async</code> allows me to set up a pipeline, I would like the SSE event to be at the end of that pipeline. I&rsquo;ve used <code>go</code> blocks for all pipeline parts, so it makes sense to me to do so here, too.</p>
+
+<p>I need to name the event, so that I can attach a JS listener to it and convert the record into JSON in order to send it to the client.</p>
+
+<pre><code class="language-javascript">var evtSource = new EventSource(&quot;/stream&quot;);
+evtSource.onmessage = function(e) {
+    console.log(&quot;in onmessage&quot;);
+    console.log(e);
+}
+
+evtSource.onerror = function(e) {
+    console.log(&quot;in onerror&quot;);
+    console.log(e);
+}
+
+evtSource.addEventListener(&quot;link-update&quot;, function(e) {
+    console.log(&quot;in event listener&quot;);
+    console.log(e);
+    console.log(JSON.parse(e.data))
+});
+
+</code></pre>
+
+<p>I&rsquo;m keeping the JS side extremely simple for now. All I want to see is an event in the console log every time I submit a link.</p>
+
+<p>With all that set up, I fire up the REPL and start the app server.</p>
+
+<pre><code>lein repl
+</code></pre>
+
+<pre><code class="language-clojure">blog-post-app.server=&gt;(run-dev)
+</code></pre>
+
+<p>I visit <code>http://localhost:8080</code>, post a test link and I get a result! Whoop, there it is. I post another, nothing.</p>
+
+<p><img src="/images/wth.png" alt="what the hell" /></p>
+
+<p>What is going on? How can I one work, but not another? I reload the browser and in the console, I see the expected event. This tells me that the record was put to <code>update-chan</code>, but it never got picked up on the other side and sent to the browser. In the REPL log output, I notice this exception:</p>
+
+<pre><code class="language-clojure">ERROR i.p.http.impl.servlet-interceptor - {:line 105, :msg &quot;An error occured when async writing to the client&quot;, :throwable #error {
+ :cause &quot;Broken pipe&quot;
+ :via
+ [{:type org.eclipse.jetty.io.EofException
+   :message nil
+   :at [org.eclipse.jetty.io.ChannelEndPoint flush &quot;ChannelEndPoint.java&quot; 200]}
+  {:type java.io.IOException
+   :message &quot;Broken pipe&quot;
+   :at [sun.nio.ch.FileDispatcherImpl write0 &quot;FileDispatcherImpl.java&quot; -2]}]
+</code></pre>
+
+<p>Broken pipe means that a connection got shut down uncleanly on one side of it. That does not match my understanding of things. Pedestal is supposed to be keeping that connection open for me. It says in that guide that it sets up a heartbeat to ensure that. Why does it shut down uncleanly then?</p>
+
+<h2 id="the-quest">The quest&hellip;</h2>
+
+<p>I then went off to find the reason why this happened and how I can fix it. I first opened an <a href="https://github.com/pedestal/pedestal/issues/384">issue</a> in Pedestal&rsquo;s Github repo, even though I didn&rsquo;t ever believe that it was a bug. I guess this is the accepted norm in the Ruby community and I got used to it. One of the maintainers was polite, helped me out a bit with the code and pointed me to the mailing list. I would like to note, though, that the first thing he says I should be aware of isn&rsquo;t supported by the guides. In the guide, the <code>stream-ready-fn</code> clearly sets up a function that sends events. I have not seen <em>any</em> counter-examples, but maybe my searching skills aren&rsquo;t up to par.</p>
+
+<p>The crucial thing in that explanation is that I need a <code>go-loop</code> function rather than a <code>go</code> one. OK, that&rsquo;s easy to fix.</p>
+
+<pre><code class="language-clojure">(defn stream-link-updates [channel]
+  (go-loop []
+   (let [record (&lt;! update-chan)]
+     (&gt;! channel {:name &quot;link-update&quot; :data (json/write-str record)}))))
+
+</code></pre>
+
+<p>I add <code>go-loop</code> to the list of functions referred to from <code>core.async</code>, reload the server, run the same test process, and I get the same result. This time, though, I get the broken pipe error almost immediately after the successful SSE message.</p>
+
+<p>I post to the <a href="https://groups.google.com/forum/#!topic/pedestal-users/J8oj33cg_e0">mailing list next</a>, as suggested by the maintainer. I&rsquo;ve yet to receive a response there. I then turn to the <a href="https://clojurians.slack.com">Clojurians Slack channel</a>. People here are awesome and I am grateful for their help and understanding.</p>
+
+<p>Jonah Benton (I can&rsquo;t find his Twitter nor Github profiles) helped me out tremendously. He provided me with a real clue as to what was going on.</p>
+
+<h2 id="the-solution">The solution&hellip;</h2>
+
+<p>This goes back to me not fully understanding nor reading through Pedestal documentation. Jonah said off-handedly that Pedestal&rsquo;s interceptors always take a parameter when they&rsquo;re being called. SSE was just another interceptor and I should have my functions return either the event channel or context all the way back to the original <code>stream-ready</code> function. This is exactly what I ended up doing.</p>
+
+<pre><code class="language-clojure">;; Loop, but always return the event channel that was passed in
+(defn stream-link-updates [channel]
+  (loop []
+    (let [record (&lt;!! update-chan)]
+      (&gt;!! channel {:name &quot;link-update&quot; :data (json/write-str record)})
+      (recur)))
+  channel)
+</code></pre>
+
+<p>Actually, I ended up doing a hybrid of two advices. I return the channel as advised by Jonah, but I also make sure that I set up an infinite loop, because I don&rsquo;t know when the next update will come. As I expected initially, this makes the whole thing work.</p>
+
+<p><img src="/images/yay.png" alt="yay" /></p>
+
+<h2 id="reflection">Reflection&hellip;</h2>
+
+<p>It took me quite a few nights of frustration to get to this point. I should have read through Pedestal&rsquo;s docs. In my defence, though the word &ldquo;interceptor&rdquo; is mentioned, there were no links to the Interceptors documentation. Was I expected to read <em>all</em> the documenation provided? I guess so.</p>
+
+<p>The mailing list seems dead, to be honest. I don&rsquo;t know how many views there are on my post right now, but 0 responses in 3 weeks does not look well for that particular medium. If you are interested in Clojure, though, the Clojurians Slack channel is the place to be.</p>
+
+<p>I am happy that I got the implementation working as I originally envisioned it. I still need to handle errors and different content types (like, what happens if I give it a PDF link?), but next, I will get ReactJS to&hellip;well, react to the incoming SSE message. I hope that this will less fun than what I had on the server.</p>
+
+<p>Until the next blog post.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

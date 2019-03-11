@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Riak Ruby Vagrant on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/riak-ruby-vagrant/</link>
+    <description>Recent content in Riak Ruby Vagrant on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 22 Apr 2012 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/riak-ruby-vagrant/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Riak and Vagrant</title>
+      <link>http://example.org/posts/2013-05-17-riak-and-vagrant/</link>
+      <pubDate>Sun, 22 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-and-vagrant/</guid>
+      <description>tl; dr; Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below.</description>
+    </item>
+    
+  </channel>
+</rss>

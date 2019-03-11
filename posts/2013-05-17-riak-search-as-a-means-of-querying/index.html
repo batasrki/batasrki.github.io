@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Riak Search as a means of querying</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Riak Search as a means of querying" />
+<meta property="og:description" content="Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-05-17-riak-search-as-a-means-of-querying/" />
+<meta property="article:published_time" content="2012-04-24T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2012-04-24T00:00:00&#43;00:00"/>
+
+<meta itemprop="name" content="Riak Search as a means of querying">
+<meta itemprop="description" content="Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning.">
+
+
+<meta itemprop="datePublished" content="2012-04-24T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2012-04-24T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="1685">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Riak Search as a means of querying"/>
+<meta name="twitter:description" content="Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Riak Search as a means of querying</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2012-04-24T00:00:00Z">April 24, 2012</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h3 id="introduction">Introduction</h3>
+
+<p>Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning.</p>
+
+<h3 id="background">Background</h3>
+
+<p>To give you some background, buckets in Riak are just namespaces for keys and their values plus some metadata about each key/value pair. As such, writing a MapReduce query that selects only the bucket, and not some range of keys within that bucket, will cause Riak to traverse all of the keys on all of the nodes in the system. Needless to say that operation will get extremely slow as the number of keys grows. There is a bit more explanation on the recently added <a href="https://github.com/basho/riak-ruby-client/wiki/Key-Value-Operations">wiki page</a> for the Riak Ruby client.</p>
+
+<h4 id="what-not-to-do">What not to do</h4>
+
+<p>As a quick example of what not to do for a production app, but something that you should play with in development, here’s a sample MapReduce query that tries to pull out events for a certain month:</p>
+
+<p>{% codeblock  lang:ruby %}</p>
+
+<h1 id="month-is-number-from-1-12-validated-elsewhere">month is number from 1-12, validated elsewhere</h1>
+
+<h1 id="self-client-is-an-instance-of-riak-client-which-hooks-you-up-to-the-database">self.client is an instance of Riak::Client which hooks you up to the database</h1>
+
+<h1 id="parameter-to-add-is-the-bucket-name">parameter to add is the bucket name</h1>
+
+<p>def events_for(month)
+  job = Riak::MapReduce.new(self.client).add(&ldquo;events&rdquo;)
+  job.map(&ldquo;function(value, keydata, arg){ var item = Riak.mapValuesJson(value)[0]; var mo = item.event_date.split(&lsquo;-&rsquo;)[1]; if(month == #{month}){ return [data];}}&ldquo;, :keep =&gt; true)
+  job.run
+end
+{% endcodeblock %}</p>
+
+<p>The <em>Riak::MapReduce</em> object is initialized with a client object that represents the database connection, whether it’s a cluster or a single node. Its <em>add</em> method takes a few parameters, but initially all I comprehended it needed was a bucket name. The other two parameters concern themselves with keys and key filters, the latter being out of scope for this blog post.</p>
+
+<p>The <em>map</em> function takes a string of Javascript which is run on each node that has the data. This keeps the querying of the data very close to where data lives, making it very easy to not worry about node availability. There are built-in Javascript functions (and I’m using one there), as well as a set of <a href="http://contrib.basho.com/">community-contributed functions</a> that one can use.</p>
+
+<p>It’s in the Javascript function that I do the filtering by month. In another post, I’ll explore pushing functions down to each node as opposed to mixing a lot of Javascript into my Ruby code. While this looked like a straightforward way to introduce dynamic querying to a key/value store (and I felt smug about it), it has the wonderful property of traversing every single key looking for those namespaced to the events bucket and then shoving those one-by-one into my Javascript function. The function manages to find the documents whose date attribute has the month I want and returns a collection of those as items in a hash to Ruby. It’s, now, quite clearly the wrong way to go about querying in Riak. Let’s see if I can make it better.</p>
+
+<h3 id="riak-search">Riak Search</h3>
+
+<p>Out of the two enhancements to the querying capabilities added by <a href="http://www.basho.com">Basho</a> to Riak, <a href="http://docs.basho.com/riak/latest/tutorials/querying/Riak-Search/">Riak Search</a> is the older one. I am starting to appreciate having a full-text search engine tightly integrated into a database the way Riak, as well as PostgreSQL, has done. Having started my Rails career with MySQL-backed apps and futzing around with various search solutions, this is another thing I appreciate not having to worry about.</p>
+
+<h4 id="enabling-riak-search">Enabling Riak Search</h4>
+
+<p>First thing I need to do is enable the full-text search on each node in the cluster. This is something that is easily automated, so it’s going on the growing list of things to automate. Right now, I’ll do it manually.</p>
+
+<p>After getting the <a href="/blog/2012/04/22/riak-and-vagrant/">cluster up and running</a>, I’ll edit each node’s app.config to enable the searching. Changing the value of <em>enabled</em> from false to true will get it going.</p>
+
+<p>{% codeblock app.config lang:erlang %}
+%% Riak Search Config
+{riak_search, [
+              %% To enable Search functionality set this &lsquo;true&rsquo;.
+              {enabled, true}
+              ]},
+{% endcodeblock %}</p>
+
+<h4 id="indexing-data">Indexing data</h4>
+
+<p>Both the wiki and Mathias Meyer’s great <a href="http://riakhandbook.com">Riak Handbook</a> provide syntax for enabling the pre-commit hook for the search engine. The hook will index new data before it’s committed to the database.</p>
+
+<p>Note I said <em>new</em> data. As of right now, the pre-commit hook will not index existing records. I do feel that this is a bit of a weakness and something to be corrected, though. Anyway, cribbing from the wiki, the syntax to enable the pre-commit hook is:</p>
+
+<p>{% codeblock %}
+search-cmd install events
+ :: Installing Riak Search &lt;&ndash;&gt; KV hook on bucket &lsquo;events&rsquo;.
+{% endcodeblock %}</p>
+
+<p>With that done and with the database primed with a few records, let’s see if we can actually search the events.</p>
+
+<h4 id="searching">Searching</h4>
+
+<p>OK, so, going back to the original MapReduce function, what I wanted were events whose date was in March. The search syntax for that is the following:</p>
+
+<p>{% codeblock Event model in irb lang:ruby %}
+Event.client.search(&ldquo;events&rdquo;, &ldquo;event_date:<em>03</em>&rdquo;)</p>
+
+<p>{&ldquo;responseHeader&rdquo;=&gt;{&ldquo;status&rdquo;=&gt;0, &ldquo;QTime&rdquo;=&gt;16, &ldquo;params&rdquo;=&gt;{&ldquo;q&rdquo;=&gt;&ldquo;event_date:<em>03</em>&rdquo;, &ldquo;q.op&rdquo;=&gt;&ldquo;or&rdquo;, &ldquo;filter&rdquo;=&gt;&ldquo;&rdquo;, &ldquo;wt&rdquo;=&gt;&ldquo;json&rdquo;}}, &ldquo;response&rdquo;=&gt;{&ldquo;numFound&rdquo;=&gt;0, &ldquo;start&rdquo;=&gt;0, &ldquo;maxScore&rdquo;=&gt;&ldquo;0.0&rdquo;, &ldquo;docs&rdquo;=&gt;[]}}
+{% endcodeblock %}</p>
+
+<p>As I’m experimenting with search, I don’t have an elegant abstraction around the lower-level driver syntax just yet. That’s a TODO for another night. What I find strange is that I know there are events in March, but this search hasn’t found any. That’s either because the documents weren’t indexed or I did something wrong.</p>
+
+<p>Let’s try with the year and month instead of just month. That’s closer to how it’ll be used anyway:</p>
+
+<p>{% codeblock Event model in irb, part 2 lang:ruby %}
+Event.client.search(&ldquo;events&rdquo;, &ldquo;event_date:2012-03*&ldquo;)</p>
+
+<p>{&ldquo;responseHeader&rdquo;=&gt;{&ldquo;status&rdquo;=&gt;0, &ldquo;QTime&rdquo;=&gt;22, &ldquo;params&rdquo;=&gt;{&ldquo;q&rdquo;=&gt;&ldquo;event_date:2012-03*&ldquo;, &ldquo;q.op&rdquo;=&gt;&ldquo;or&rdquo;, &ldquo;filter&rdquo;=&gt;&ldquo;&rdquo;, &ldquo;wt&rdquo;=&gt;&ldquo;json&rdquo;}}, &ldquo;response&rdquo;=&gt;{&ldquo;numFound&rdquo;=&gt;25, &ldquo;start&rdquo;=&gt;0, &ldquo;maxScore&rdquo;=&gt;&ldquo;0.00000e+0&rdquo;, &ldquo;docs&rdquo;=&gt;[{&ldquo;id&rdquo;=&gt;&ldquo;1iCUQIvt4Zz7cccLFjDPAr4pLFf&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-16T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Vaughan&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;1uMMj5EBEJF26gGzM6ORvJIxBym&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-31T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Toronto&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;3eL8Zsq7uhXMcNVkiT2EqMOmjIx&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-11T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Maple&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;63uNQcQqunUIWuxFaUyFJmJvquf&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-31T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Vaughan&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;891nojSWgC86mc9a3sgBzogEhAB&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-09T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;8WFTYibfz46VNjzJeBYHpcvAKOU&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-28T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Vaughan&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;8XJZR8K6sXYylBz4Kq1xRwsiddd&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-13T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;8yfHBxxhSM12dM9u7RsCjInHehV&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-16T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Vaughan&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;9dAuFCdh32OKIoIMgGWtt1kE4gZ&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-23T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Toronto&rdquo;}, &ldquo;props&rdquo;=&gt;{}}, {&ldquo;id&rdquo;=&gt;&ldquo;Alj2Iwqg0D3dCwAENMjDbeggM2t&rdquo;, &ldquo;index&rdquo;=&gt;&ldquo;events&rdquo;, &ldquo;fields&rdquo;=&gt;{&ldquo;category&rdquo;=&gt;&ldquo;personal&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-07T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;Woodbridge&rdquo;}, &ldquo;props&rdquo;=&gt;{}}]}}
+{% endcodeblock %}</p>
+
+<p>Ah, nice. So, interesting that having wildcards on both sides of the search term doesn’t work, yet adding a year and wildcard after does. It’s something to further explore later, but let’s analyze the results.</p>
+
+<p>The Hash structure returned from the search engine has a few interesting fields, but what I’m interested is data retrieval. The <em>docs</em> key points to an array of hashes, each hash being a document returned. I can easily parse that out, throw away fields I don’t care about and present the clean hash as attributes to my upstream object. Now that the low level is working nicely, that part will be easy.</p>
+
+<p>It looks like I may be even able to drop MapReduce. Well, it did, until I came across these tidbits:</p>
+
+<blockquote>
+<p>Currently, the wildcard must come at the end of the term in both
+cases. (Basho <a href="http://wiki.basho.com/Riak-Search---Querying.html">wiki.basho.com/…</a>)</p>
+
+<p>It needs a minimum of three characters though,… (Mathias Meyer, <a href="http://riakhandbook.com">The Riak Handbook</a>)</p>
+</blockquote>
+
+<p>Well, that explains why the first search failed. OK, so the search is not as full-featured yet as I’d like, but every piece of documentation I read suggests that it can be integrated with MapReduce. Surely with the MapReduce’s power, I’ll be able to get some nice querying going.</p>
+
+<h4 id="integration-with-mapreduce">Integration with MapReduce</h4>
+
+<p>Since this is backing a web application, I need to make it easy for users to do adhoc searching of their events. As we’ve seen, search can get me partly there, so let’s integrate with the MapReduce object to add a bit more power. What I want is grab all personal events in March with no location. Although <a href="https://twitter.com/seancribbs">Sean Cribbs</a> has started work on documentation for the Riak Ruby client, it’s still early enough for the MapReduce and Search documentation not to be there. As such, let’s refer to the <a href="https://github.com/basho/riak-ruby-client/blob/master/spec/riak/search_spec.rb">search spec</a>.</p>
+
+<p>{% codeblock code I&rsquo;m guessing will work lang:ruby %}
+job = Riak::MapReduce.new(Event.client)
+job.search(&ldquo;events&rdquo;, &ldquo;event_date:2012-03*&ldquo;)
+job.map(&ldquo;function(value, keydata, arg){ var data = Riak.mapValuesJson(value)[0]; if(data.location === \&rdquo;\&ldquo;) {return [data];} else{ return [];} }&ldquo;, :keep =&gt; true)
+job.run</p>
+
+<p>#returns
+[{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-13T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}, {&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2012-03-09T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}]
+{% endcodeblock %}</p>
+
+<p>Nice, I guessed correctly. I wasn’t completely sure, but I got it on the first try, so that’s good. The best news is that the list-keys warning was not triggered. Exactly what I wanted!</p>
+
+<h3 id="caveats">Caveats</h3>
+
+<p>The biggest caveat that I can immediately percieve is the inability of the search engine to index the existing set of documents. There are ways around that, of course. If the dataset is small enough, it can be reimported after the pre-commit hook was set up. That’s what I did here. There is also a way to index the data through the client. I may explore that later, but for now, you can refer to the spec file linked above.</p>
+
+<p>Another, fairly obvious caveat is that inserting records with the search enabled is going to be slower and more taxing on each node than it would be without it. Mathias suggests to benchmark the before and after and I think that’s a worthwhile suggestion. For myself, I know that the app I’m writing is a lot more read-oriented than write-oriented, so I’m willing to take that hit. I’ll still benchmark it, because it’s good practice, but I need this type of querying power.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>Overall, I like Riak Search. It is not hard to pick up and it’s not hard to modify existing code to leverage it. I would like if indexing was a bit more comprehensive, but it’s not a showstopper for me.</p>
+
+<p>As far as putting additional pressure on each node due to the overhead of indexing, it’s a manageable thing for me now. However, Basho has introduced secondary indexes to Riak lately. Since it seems that adding the secondary index to a document is an application-level concern rather than a database-level one, it seems as if it’s a lighter load on the nodes themselves, while introducing a bit of complexity to the application. I’ll explore that next.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

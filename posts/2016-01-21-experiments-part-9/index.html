@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 9</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 9" />
+<meta property="og:description" content="Previously in Experiments, part 8,&hellip; I got SSE working on the server-side and was happy about that.
+Now&hellip; Tonight, I&rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what ReactDOM.render returns. Does it return the actual component?
+Time for an experiment var component = ReactDOM." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2016-01-21-experiments-part-9/" />
+<meta property="article:published_time" content="2016-01-21T22:01:40-05:00"/>
+<meta property="article:modified_time" content="2016-01-21T22:01:40-05:00"/>
+
+<meta itemprop="name" content="Experiments part 9">
+<meta itemprop="description" content="Previously in Experiments, part 8,&hellip; I got SSE working on the server-side and was happy about that.
+Now&hellip; Tonight, I&rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what ReactDOM.render returns. Does it return the actual component?
+Time for an experiment var component = ReactDOM.">
+
+
+<meta itemprop="datePublished" content="2016-01-21T22:01:40-05:00" />
+<meta itemprop="dateModified" content="2016-01-21T22:01:40-05:00" />
+<meta itemprop="wordCount" content="394">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 9"/>
+<meta name="twitter:description" content="Previously in Experiments, part 8,&hellip; I got SSE working on the server-side and was happy about that.
+Now&hellip; Tonight, I&rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what ReactDOM.render returns. Does it return the actual component?
+Time for an experiment var component = ReactDOM."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 9</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2016-01-21T22:01:40-05:00">January 21, 2016</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-8-https-batasrki-github-io-blog-2016-01-09-experiments-part-8">Previously in <a href="https://batasrki.github.io/blog/2016/01/09/experiments-part-8">Experiments, part 8</a>,&hellip;</h2>
+
+<p>I got SSE working on the server-side and was happy about that.</p>
+
+<h2 id="now">Now&hellip;</h2>
+
+<p>Tonight, I&rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what <code>ReactDOM.render</code> returns. Does it return the actual component?</p>
+
+<h2 id="time-for-an-experiment">Time for an experiment</h2>
+
+<pre><code class="language-javascript">var component = ReactDOM.render(&lt;LinkListContainer url=&quot;/api/links&quot; /&gt;, document.getElementById(&quot;content&quot;));
+
+console.log(component);
+</code></pre>
+
+<p>Very simply, I am assigning the return value of <code>ReactDOM.render</code> to a variable and outputting that to the console. Thank $DEITY for browser consoles. Reloading the page and inspecting the <code>Object</code> returned shows me that it <strong>is</strong> the root component. Great, I love when software behaves how I think it should.</p>
+
+<p>This makes things quite simple. I will pass the component into the <code>EventSource</code> callback function and do things.</p>
+
+<pre><code class="language-javascript">evtSource.addEventListener(&quot;link-update&quot;, function(e) {
+  var currentData = component.state.data;
+  var replacement = JSON.parse(e.data);
+
+  var toReplace = currentData.filter(function(obj) {
+    if(obj.id === replacement.id) {
+      return obj;
+    }
+  })[0];
+
+
+  if(toReplace !== undefined) {
+    var idx = currentData.indexOf(toReplace);
+    currentData.splice(idx, 1, replacement);
+    component.setState({data: currentData});
+  }
+});
+
+</code></pre>
+
+<p>The <code>component</code> gives me access to the <code>data</code> attribute holding the collection of links. The <code>link-update</code> event will send me a whole link record. Having those two things enables me to:</p>
+
+<ul>
+<li>Find the record that needs replacing, which is accomplished by matching ID fields.</li>
+<li>Splicing the new record into the position where the old one was.</li>
+<li>Updating the component with the new data using the standard <code>setState</code> call.</li>
+</ul>
+
+<p>Simple and easy. I like that. Here is how that looks. Keep watching the top-left corner. You will see the initial value for the <code>title</code> being the URL, then see it change to the actual title.</p>
+
+<p><img src="/images/sse-front-end.gif" alt="SSE front end" /></p>
+
+<h2 id="what-next">What next</h2>
+
+<p>In some respects, this is now better than what I already have running. In others, it&rsquo;s not there yet. There are few other things I&rsquo;d like to add, though. Firstly, the title fetching code can only handle HTML pages, but I like to save links to PDFs, as well. I have a bit of working code somewhere that I&rsquo;ll look to integrate. Secondly, I&rsquo;d like to archive or delete the links I don&rsquo;t want anymore. Thirdly, I will want to persist the in-memory collection to some data store and be able to retrieve it without modifying a lot.</p>
+
+<p>Well, until the next blog post, good night.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

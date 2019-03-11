@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on (Insightful) Ramblings</title>
+    <link>http://example.org/posts/</link>
+    <description>Recent content in Posts on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 14 Nov 2017 23:51:27 -0500</lastBuildDate>
+    
+	<atom:link href="http://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Game of Life in Elixir and OTP</title>
+      <link>http://example.org/posts/2017-11-14-game-of-life-in-elixir-and-otp/</link>
+      <pubDate>Tue, 14 Nov 2017 23:51:27 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2017-11-14-game-of-life-in-elixir-and-otp/</guid>
+      <description>I&amp;rsquo;m back! During my time away from the blog, I&amp;rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The latest one is the inspiration for this blog post.
+The course wants me to use Scala and Kompics (course facilitators&amp;rsquo; distributed framework thing). I really don&amp;rsquo;t have an interest in Scala, and I&amp;rsquo;m auditing the course so I can&amp;rsquo;t submit work anyway. I thought it&amp;rsquo;d be interesting to use Elixir and OTP to solve the problems.</description>
+    </item>
+    
+    <item>
+      <title>Implementing a queue using an array</title>
+      <link>http://example.org/posts/2016-07-05-implementing-a-queue-using-an-array/</link>
+      <pubDate>Tue, 05 Jul 2016 21:48:39 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-07-05-implementing-a-queue-using-an-array/</guid>
+      <description>Up tonight, I&amp;rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the Data Structures course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.
+Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&amp;rsquo;ll have two pointers that will wrap around to the beginning of the array as needed.</description>
+    </item>
+    
+    <item>
+      <title>Stacks and queues part 2</title>
+      <link>http://example.org/posts/2016-06-26-stacks-and-queues-part-2/</link>
+      <pubDate>Sun, 26 Jun 2016 21:31:26 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-06-26-stacks-and-queues-part-2/</guid>
+      <description>Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.
+Short background As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst.</description>
+    </item>
+    
+    <item>
+      <title>Stacks and queues, part 1</title>
+      <link>http://example.org/posts/2016-06-23-stacks-and-queues/</link>
+      <pubDate>Thu, 23 Jun 2016 20:11:26 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-06-23-stacks-and-queues/</guid>
+      <description>I&amp;rsquo;m auditing the Data Structures course on Coursera. Auditing means I&amp;rsquo;m taking it for free and not paying them like they want me to. This also means I can&amp;rsquo;t submit solutions to quizzes. Instead, I will try to write things up here as I learn them.
+First up, I&amp;rsquo;d like to attempt to implement a stack in Clojure and Ruby using an array as the base data structure.
+Stack using an list in Clojure and an array in Ruby A stack is known as a Last In, First Out data structure.</description>
+    </item>
+    
+    <item>
+      <title>Posting links to Facebook</title>
+      <link>http://example.org/posts/2016-04-26-posting-links-to-facebook/</link>
+      <pubDate>Tue, 26 Apr 2016 21:20:03 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-04-26-posting-links-to-facebook/</guid>
+      <description>Tonight, I&amp;rsquo;ll be doing something slightly different and actually, possibly relevant to my day job. I&amp;rsquo;m going to take the links I have saved and post them on my Facebook account. Using Clojure and ReactJS! It may be an interesting exploration into interfacing with Facebook or it may not. I have no clue and isn&amp;rsquo;t that lack of knowledge what makes the life worth living?
+Let&amp;rsquo;s go I&amp;rsquo;m guessing I can post straight from Javascript, but I&amp;rsquo;d like to track how links I share will be received.</description>
+    </item>
+    
+    <item>
+      <title>Deletion on server-side</title>
+      <link>http://example.org/posts/2016-04-10-deletion-on-server-side/</link>
+      <pubDate>Sun, 10 Apr 2016 21:23:15 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-04-10-deletion-on-server-side/</guid>
+      <description>Previously, I wrote about how to delete a link from the list of links client-side in the new ReactJS version of my bookmarking app. Tonight, I will finish off that feature by enabling the deletion on the server.
+First, a confession It took me nearly a month to write the follow-up post for a few reasons, but the chief problem was this piece of code:
+(defn destroy-link [request] (let [id (get-in request [:path-params :id])] (reset!</description>
+    </item>
+    
+    <item>
+      <title>Deletion using ReactJS</title>
+      <link>http://example.org/posts/2016-03-14-deletion-using-reactjs/</link>
+      <pubDate>Mon, 14 Mar 2016 00:01:34 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-03-14-deletion-using-reactjs/</guid>
+      <description>Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.
+Client-side first On the client-side, I need add a small form that will submit the DELETE request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&amp;rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 9</title>
+      <link>http://example.org/posts/2016-01-21-experiments-part-9/</link>
+      <pubDate>Thu, 21 Jan 2016 22:01:40 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2016-01-21-experiments-part-9/</guid>
+      <description>Previously in Experiments, part 8,&amp;hellip; I got SSE working on the server-side and was happy about that.
+Now&amp;hellip; Tonight, I&amp;rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what ReactDOM.render returns. Does it return the actual component?
+Time for an experiment var component = ReactDOM.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 8</title>
+      <link>http://example.org/posts/2016-01-09-experiments-part-8/</link>
+      <pubDate>Sat, 09 Jan 2016 23:20:30 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2016-01-09-experiments-part-8/</guid>
+      <description>Previously in Experiments, part 7,&amp;hellip; I switched from Compojure to Pedestal in order to take advantage of its support for Server-sent Events. I want to use that to send background updates to the client on completion of a task.
+This took a while I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&amp;rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 7</title>
+      <link>http://example.org/posts/2015-12-21-experiments-part-7/</link>
+      <pubDate>Mon, 21 Dec 2015 21:52:24 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-21-experiments-part-7/</guid>
+      <description>Previously in Experiments, part 6,&amp;hellip; I used core.async to background a slow task, namely fetching the HTML of the saved URL and parsing out the &amp;lt;title&amp;gt; tag.
+Up next&amp;hellip; I need to do a bit of yak-shaving. As I alluded to before, I want to use Server-sent Events, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&amp;rsquo;ve used Compojure, but after reading up on SSE and Clojure, I have been convinced that I need to use either Pedestal or yada.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 6</title>
+      <link>http://example.org/posts/2015-12-19-experiments-part-6/</link>
+      <pubDate>Sat, 19 Dec 2015 20:23:01 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-19-experiments-part-6/</guid>
+      <description>Previously in Experiments, part 5,&amp;hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&amp;rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &amp;quot;0.2.374&amp;quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&amp;gt;! &amp;lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 5</title>
+      <link>http://example.org/posts/2015-12-19-experiments-part-5/</link>
+      <pubDate>Sat, 19 Dec 2015 18:34:43 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-19-experiments-part-5/</guid>
+      <description>Previously in Experiments, part 4,&amp;hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&amp;rsquo;s installment&amp;hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&amp;rsquo;ll have to commit to a database, but I can push that off for at least one more post.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 4</title>
+      <link>http://example.org/posts/2015-12-15-experiments-part-4/</link>
+      <pubDate>Tue, 15 Dec 2015 22:02:56 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-15-experiments-part-4/</guid>
+      <description>Previously in Experiments, part 3,&amp;hellip; I set up a card-based UI and added a few more records to my test data set.
+In tonight&amp;rsquo;s installment&amp;hellip; It&amp;rsquo;s still (mostly) about the UI. I&amp;rsquo;m going to create a form for adding new links. I will be appending the links to the test data set and push dealing with the DB until later.
+Onward, then&amp;hellip; Up to now, this has been a read-only app.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 3</title>
+      <link>http://example.org/posts/2015-12-08-experiments-part-3/</link>
+      <pubDate>Tue, 08 Dec 2015 00:42:50 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-08-experiments-part-3/</guid>
+      <description>Previously in Experiments, part 2,&amp;hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
+In tonight&amp;rsquo;s installment&amp;hellip; It&amp;rsquo;s all about the UI. I&amp;rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
+Onward, then&amp;hellip; Firstly, I&amp;rsquo;m going to add 3 more links to my dataset so that I can play with the layout.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 2</title>
+      <link>http://example.org/posts/2015-12-01-experiments-part-2/</link>
+      <pubDate>Tue, 01 Dec 2015 20:25:32 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-01-experiments-part-2/</guid>
+      <description>Previously in Experiments,&amp;hellip; I set up a Clojure backend and installed ReactJS front-end. I also created a basic skeleton, but that didn&amp;rsquo;t actually show up, because JSX.
+In tonight&amp;rsquo;s installment&amp;hellip; Firstly, I&amp;rsquo;m going to fix up the transpiling from JSX to JS, so that changes to the React front-end are picked up and shown. I&amp;rsquo;ll add the expected route, but serve dummy data. Then, I&amp;rsquo;ll get the front-end to consume that data.</description>
+    </item>
+    
+    <item>
+      <title>Experiments, part 1</title>
+      <link>http://example.org/posts/2015-11-27-experiments/</link>
+      <pubDate>Fri, 27 Nov 2015 19:50:25 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-11-27-experiments/</guid>
+      <description>A different tack I&amp;rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
+Continuing my search for that fun high, I started looking at other technologies. I&amp;rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be.</description>
+    </item>
+    
+    <item>
+      <title>Passing lambdas as parameters</title>
+      <link>http://example.org/posts/2015-09-15-passing-lambdas-as-parameters/</link>
+      <pubDate>Tue, 15 Sep 2015 23:54:19 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2015-09-15-passing-lambdas-as-parameters/</guid>
+      <description>Background At my current job, I have been working on merchants stores&amp;rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that.</description>
+    </item>
+    
+    <item>
+      <title>RSpec matcher and time value</title>
+      <link>http://example.org/posts/2015-01-29-rspec-matcher-and-time-value/</link>
+      <pubDate>Thu, 29 Jan 2015 20:30:29 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-01-29-rspec-matcher-and-time-value/</guid>
+      <description>This will be a quick post that documents an interesting find in RSpec.
+Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
+As many experienced Ruby programmers have seen, the failure looks like this:</description>
+    </item>
+    
+    <item>
+      <title>Riak 2i as a means of querying</title>
+      <link>http://example.org/posts/2013-05-17-riak-2i-as-a-means-of-querying/</link>
+      <pubDate>Wed, 23 May 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-2i-as-a-means-of-querying/</guid>
+      <description>Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair.</description>
+    </item>
+    
+    <item>
+      <title>Riak Search as a means of querying</title>
+      <link>http://example.org/posts/2013-05-17-riak-search-as-a-means-of-querying/</link>
+      <pubDate>Tue, 24 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-search-as-a-means-of-querying/</guid>
+      <description>Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning.</description>
+    </item>
+    
+    <item>
+      <title>Riak and Vagrant</title>
+      <link>http://example.org/posts/2013-05-17-riak-and-vagrant/</link>
+      <pubDate>Sun, 22 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-riak-and-vagrant/</guid>
+      <description>tl; dr; Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below.</description>
+    </item>
+    
+    <item>
+      <title>No Rails in my specs</title>
+      <link>http://example.org/posts/2013-05-17-no-rails-in-my-specs/</link>
+      <pubDate>Wed, 07 Dec 2011 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-05-17-no-rails-in-my-specs/</guid>
+      <description>tl; dr Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:
+A different way of writing specs, especially controller ones There is overhead due to having to handle requires on your own These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long.</description>
+    </item>
+    
+    <item>
+      <title>CRDT for real data in Riak and Ruby</title>
+      <link>http://example.org/posts/2013-10-02-crdt-for-real-data-in-riak-and-ruby/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-10-02-crdt-for-real-data-in-riak-and-ruby/</guid>
+      <description>Intro In the previous post, I briefly introduced CRDTs in Ruby and have shown a basic usage case for one Conflict-Free Replicated Data Type. Tonight, we will explore one slightly more complicated use case that can be seen in real applications in the wild.
+Use case For the purpose of this post, imagine we&amp;rsquo;re running a Netflix clone. We have accounts and we have movies. For the purposes of recommendations, we want to store what movies each account holder has viewed.</description>
+    </item>
+    
+    <item>
+      <title>CRDT primer in Riak and Ruby</title>
+      <link>http://example.org/posts/2013-07-29-crdt-primer-in-riak-and-ruby/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/2013-07-29-crdt-primer-in-riak-and-ruby/</guid>
+      <description>Introduction In this post, I shall attempt how to use CRDTs in a Ruby class, backed by the Riak database. CRDT stands for Commutative Replicated Data Type. There is no Wikipedia entry for this, yet, so I&amp;rsquo;m linking to a blog post which is linking to a paper.
+Background CRDTs solve a particular problem well. In a distributed database, like Riak, it is quite possible for a value under a key to receive multiple writes from different clients.</description>
+    </item>
+    
+  </channel>
+</rss>

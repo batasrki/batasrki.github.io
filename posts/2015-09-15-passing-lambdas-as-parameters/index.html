@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Passing lambdas as parameters</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Passing lambdas as parameters" />
+<meta property="og:description" content="Background At my current job, I have been working on merchants stores&rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-09-15-passing-lambdas-as-parameters/" />
+<meta property="article:published_time" content="2015-09-15T23:54:19-04:00"/>
+<meta property="article:modified_time" content="2015-09-15T23:54:19-04:00"/>
+
+<meta itemprop="name" content="Passing lambdas as parameters">
+<meta itemprop="description" content="Background At my current job, I have been working on merchants stores&rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that.">
+
+
+<meta itemprop="datePublished" content="2015-09-15T23:54:19-04:00" />
+<meta itemprop="dateModified" content="2015-09-15T23:54:19-04:00" />
+<meta itemprop="wordCount" content="305">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Passing lambdas as parameters"/>
+<meta name="twitter:description" content="Background At my current job, I have been working on merchants stores&rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Passing lambdas as parameters</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-09-15T23:54:19-04:00">September 15, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="background">Background</h2>
+
+<p>At <a href="https://shopify.com">my current job</a>, I have been working on merchants stores&rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that.</p>
+
+<h2 id="lambdas">Lambdas</h2>
+
+<p>The answer was suggested by my team lead and clarified by a co-worker. I then remembered I knew this about Ruby and I&rsquo;ve been using a similar approach extensively when writing Clojure programs.</p>
+
+<p>Much like JS, Ruby allows us to pass a <code>lambda</code> or a <code>Proc</code> into a method as a parameter. We can then call this stored function with certain parameters. In the case above, what I wanted was to partition the responses to batched API calls into successful and failed ones. I could then invoke 2 lambdas, one for each set of responses and do the appropriate thing.</p>
+
+<h2 id="a-trivial-example">A trivial example</h2>
+
+<p>I don&rsquo;t want to share the code specific to my problem, so here&rsquo;s a trivialized version of the same approach:</p>
+
+<pre><code class="language-ruby">for_evens = lambda { |evens| p &quot;All even numbers in the set are: #{evens}&quot; }
+
+for_odds = lambda { |odds| p &quot;All odd numbers in the set are: #{odds}&quot; }
+
+the_set = (1..10).to_a
+
+def partition_set_and_invoke_lambdas(the_set, for_evens, for_odds)
+  evens, odds = the_set.partition {|item| item % 2 == 0}
+
+  for_evens.call(evens)
+  for_odds.call(odds)
+end
+
+partition_set_and_invoke_lambdas(the_set, for_odds, for_evens)
+
+&quot;All odd numbers in the set are: [2, 4, 6, 8, 10]&quot;
+&quot;All even numbers in the set are: [1, 3, 5, 7, 9]&quot;
+ =&gt; &quot;All even numbers in the set are: [1, 3, 5, 7, 9]&quot;
+</code></pre>
+
+<p>Cool, eh?</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

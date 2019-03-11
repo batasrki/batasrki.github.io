@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Riak and Vagrant</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Riak and Vagrant" />
+<meta property="og:description" content="tl; dr; Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-05-17-riak-and-vagrant/" />
+<meta property="article:published_time" content="2012-04-22T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2012-04-22T00:00:00&#43;00:00"/>
+
+<meta itemprop="name" content="Riak and Vagrant">
+<meta itemprop="description" content="tl; dr; Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below.">
+
+
+<meta itemprop="datePublished" content="2012-04-22T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2012-04-22T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="2249">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Riak and Vagrant"/>
+<meta name="twitter:description" content="tl; dr; Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Riak and Vagrant</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2012-04-22T00:00:00Z">April 22, 2012</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="tl-dr">tl; dr;</h2>
+
+<p>Creating a Riak cluster as a set of nodes through Vagrant and talking to the cluster through the official Ruby driver turned out to be harder than expected. Cryptic errors in Riak itself and lack of documentation for hooking up the driver to the cluster were two root causes. The final, working versions of the Vagrantfile and the Riak config files needed to get things working are below.</p>
+
+<p>{% codeblock Vagrantfile lang:ruby %}
+Vagrant::Config.run do |config|
+  config.vm.define :node1 do |node|
+    node.vm.box = &ldquo;ubuntu-1110-server-amd64&rdquo;
+    node.vm.network :hostonly, &ldquo;192.168.33.10&rdquo;
+    node.vm.forward_port 8098, 8091
+    node.vm.forward_port 8087, 8081
+  end</p>
+
+<p>config.vm.define :node2 do |node|
+    node.vm.box = &ldquo;ubuntu-1110-server-amd64&rdquo;
+    node.vm.network :hostonly, &ldquo;192.168.33.11&rdquo;
+    node.vm.forward_port 8098, 8092
+    node.vm.forward_port 8087, 8082
+  end</p>
+
+<p>config.vm.define :node3 do |node|
+    node.vm.box = &ldquo;ubuntu-1110-server-amd64&rdquo;
+    node.vm.network :hostonly, &ldquo;192.168.33.12&rdquo;
+    node.vm.forward_port 8098, 8093
+    node.vm.forward_port 8087, 8083
+  end
+end
+{% endcodeblock %}</p>
+
+<p>{% codeblock vm.args lang:erlang %}</p>
+
+<h2 id="name-of-the-riak-node">Name of the riak node</h2>
+
+<h2 id="you-need-to-change-the-values-on-both-sides-of-the-sign">You need to change the values on both sides of the @ sign</h2>
+
+<p>-name node1@192.168.33.10
+{% endcodeblock %}</p>
+
+<h3 id="introduction">Introduction</h3>
+
+<p>A few nights ago, I embarked on getting a proper Riak cluster going on my big dev machine. Up to this point, I’ve been developing against a single Riak instance. Since Riak is meant to be used in a cluster and its behaviour can differ when multiple nodes are activated, I decided to upgrade to the cluster. I could have just used the devrel builds of Riak, by dowloading the latest version of Riak’s <a href="http://s3.amazonaws.com/downloads.basho.com/riak/1.3/1.3.1/riak-1.3.1.tar.gz">source</a>, issuing make all and make devrel commands and generally following <a href="http://docs.basho.com/riak/latest/tutorials/fast-track/Building-a-Development-Environment/">these steps</a>. However, since I do plan on eventually shipping my Riak-powered project, what I really wanted to do was build a true cluster of Ubuntu servers running the 64-bit <a href="http://s3.amazonaws.com/downloads.basho.com/riak/1.3/1.3.1/debian/6/riak_1.3.1-1_amd64.deb">binary package</a> of Riak on each instance.</p>
+
+<h4 id="existing-information">Existing information</h4>
+
+<p>After I’ve done too many of the steps below, I finally entered ‘riak vagrant’ as the search term in Google. I ended up on a <a href="http://basho.com/creating-a-local-riak-cluster-with-vagrant-and-chef/">post</a> on the Basho blog that details how to use Vagrant and Chef to automatically provision nodes for the cluster. After much head-smacking, I realized that I actually preferred to step through the build manually, lest the automatic provisions obscure a part of the process. I do realize that others may want to expedite said process, which is why I’m linking to the post. Onwards then.</p>
+
+<h3 id="cluster-build-options">Cluster build options</h3>
+
+<p>There are several ways available to me to have real instances running, including <a href="http://aws.amazon.com/ec2">EC2</a> and <a href="http://www.rackspace.com/cloud">Rackspace</a>. I didn’t want, or really need to right now, to figure out how to set up instances I want on those two, much less trying to get Riak installed and running. There is a third option, and as you might have guessed from the title of this post, it involves <a href="http://vagrantup.com/">Vagrant</a>.</p>
+
+<p>Vagrant is a wonderful, Virtualbox-powered, tool that lets one locally provision instances of operating systems and interact with them as if they’re real server boxes. After I downloaded and installed Vagrant, I went in search of a good-enough box that would serve as the basis of the nodes in my cluster. After a quick visit to <a href="http://vagrantbox.es/">Vagrantbox.es</a>, I downloaded the <a href="http://dl.dropbox.com/u/3886896/oneiric64.box">Ubuntu 11.10 64-bit box</a>.</p>
+
+<p>The next steps added the box to my setup:</p>
+
+<p>{% codeblock %}
+vagrant box add (fully qualified box name)
+vagrant init ubuntu-1110-server-amd64
+{% endcodeblock %}</p>
+
+<p>With the box added, I scoured Vagrant’s <a href="http://docs.vagrantup.com/v2/">excellent documentation</a> for ways to get multiple instances of the same box up and running. I first tried making multiple subdirectories and either copying the Vagrantfile into each and making appropriate modifications or symlinking the original Vagrantfile to each subdirectory. While the first approach worked, it clearly wouldn’t scale as I added more nodes to the cluster. The latter approach, not surprisingly, failed spectacularly.</p>
+
+<p>I, then, ran across the <a href="http://docs.vagrantup.com/v2/multi-machine/index.html">Multi-VM Environments</a> page in the documentation. This is actually what I wanted and I quickly removed the subdirectories and began building my cluster in the parent directory.</p>
+
+<h3 id="setting-up-riak-on-the-nodes">Setting up Riak on the nodes</h3>
+
+<p>Now that I have 3 nodes up and running, it’s time to get Riak installed and running. After SSH-ing into each instance in turn, I download the above binary distribution using curl:</p>
+
+<p>{% codeblock %}</p>
+
+<h1 id="same-for-node2-and-node3">same for node2 and node3</h1>
+
+<p>vagrant ssh node1</p>
+
+<p>curl -O <a href="http://downloads.basho.com.s3-website-us-east-1.amazonaws.com/riak/1.1/1.1.2/riak_1.1.2-1_amd64.deb">http://downloads.basho.com.s3-website-us-east-1.amazonaws.com/riak/1.1/1.1.2/riak_1.1.2-1_amd64.deb</a></p>
+
+<p>{% endcodeblock %}</p>
+
+<p>This will download the 1.1.2 version of Riak, which is currently the latest stable version. Change the url as needed. The install originally fails, due to libssl being the version 1.0 and Riak wanting the 0.9.8. A sudo apt-get install command later, the install succeeds and we’re up and running. The nice thing about the binary install is that it will set up Riak to start on boot, which means I don’t have to muck around with that.</p>
+
+<h3 id="setting-up-the-riak-cluster">Setting up the Riak cluster</h3>
+
+<p>Having Riak installed on all the VMs, it’s time to make them into a cluster. The documentation on how to connect nodes to the cluster is sparse and in multiple places. Currently, the best place to look for Riak documentation is in the <a href="http://riakhandbook.com/">Riak handbook</a>. It’s a self-published e-book, but it does aggregate a lot of information about Riak in one place and it’s much easier to search than Basho’s wiki and the Riak mailing list, at least right now.</p>
+
+<p>So, as per the handbook, all one needs to do is change the 127.0.0.1 to the current machine’s IP address in the <em>vm.args</em> file.</p>
+
+<p>{% codeblock vm.args lang:erlang %}</p>
+
+<h2 id="from">From</h2>
+
+<p>-name riak@127.0.0.1</p>
+
+<h2 id="to">To</h2>
+
+<p>-name riak@192.168.33.11
+{% endcodeblock %}</p>
+
+<p>Restarting the node fails with an error, though.</p>
+
+<p>{% codeblock %}
+riak restart</p>
+
+<h1 id="node-node1-192-168-33-11-not-responding-to-pings">Node &lsquo;node1@192.168.33.11&rsquo; not responding to pings.</h1>
+
+<p>{% endcodeblock %}</p>
+
+<p>After referring to the Vagrant/Chef example above, I notice that ports in <em>app.config</em> are bound to 0.0.0.0, i.e. all interfaces. Changing that lets me finally use the following command to add the current node to a cluster:</p>
+
+<p>{% codeblock riak admin %}
+riak-admin join riak@192.168.33.10
+{% endcodeblock %}</p>
+
+<p>After I set up each node with its own static IP, I changed the <em>vm.args</em> file as above and executed the command. The <em>riak-admin status</em> command should show nodes connected like this:</p>
+
+<p>{% codeblock %}
+riak-admin status | grep connected</p>
+
+<h1 id="connected-nodes-192-168-33-10">connected_nodes: [192.168.33.10]</h1>
+
+<p>{% endcodeblock %}</p>
+
+<p>Everything seems connected and working, so we should be good.</p>
+
+<h3 id="talking-to-riak-nodes">Talking to Riak nodes</h3>
+
+<p>Now that each node has Riak installed and running, I want to make sure that I can talk to each node from the host machine. The Vagrant documentation specifies that I can make a few types of networks for my nodes:</p>
+
+<ol>
+<li><em>hostonly</em>, meaning no external access, all traffic is between the nodes and the host machine</li>
+<li><em>bridged</em>, meaning each node shows up as a physical interface, presumably letting external traffic access it</li>
+</ol>
+
+<p>I chose the <em>hostonly</em> option for a few reasons, chief being that this is an experiment. Also, I think it’s beneficial from a system design perspective to not expose my database nodes to the vagaries of the internet. I could be wrong, but I’ve heard something to that effect.</p>
+
+<p>Anyhow, I also would like to query these instances for data in Riak, so I have to forward traffic from my host machine to each node’s Riak port which, by default, is 8098. Actually, from what I’ve gathered from reading through the Chef blog post linked above, I have to set up two forwards. Port 8098 is the HTTP traffic port to Riak. It also exposes a protocol buffers port, it being 8087. In Vagrant, it’s done like so:</p>
+
+<p>{% codeblock Vagrantfile lang:ruby %}
+node.vm.forward_port 8098, 8091
+node.vm.forward_port 8087, 8081
+{% endcodeblock %}</p>
+
+<p>This needs to be done for each node in the cluster where the second set of numbers is the port numbers on the host machine. I found that syntax slightly unintuitive and subject to multiple documentation lookups, but I guess I’ll get used to it eventually.</p>
+
+<p>A quick check through curl reveals that each Riak instance responds to the basic curl command.</p>
+
+<p>{% codeblock curl %}
+curl -i <a href="http://localhost:8091">http://localhost:8091</a></p>
+
+<p>HTTP/1.1 200 OK
+Vary: Accept
+Server: MochiWeb/1.1 WebMachine/1.9.0 (participate in the frantic)
+Link: </buckets>; rel=&ldquo;riak_kv_wm_buckets&rdquo;,</riak>; rel=&ldquo;riak_kv_wm_buckets&rdquo;,</buckets>; rel=&ldquo;riak_kv_wm_index&rdquo;,</buckets>; rel=&ldquo;riak_kv_wm_keylist&rdquo;,</buckets>; rel=&ldquo;riak_kv_wm_link_walker&rdquo;,</riak>; rel=&ldquo;riak_kv_wm_link_walker&rdquo;,</mapred>; rel=&ldquo;riak_kv_wm_mapred&rdquo;,</buckets>; rel=&ldquo;riak_kv_wm_object&rdquo;,</riak>; rel=&ldquo;riak_kv_wm_object&rdquo;,</ping>; rel=&ldquo;riak_kv_wm_ping&rdquo;,</buckets>; rel=&ldquo;riak_kv_wm_props&rdquo;,</stats>; rel=&ldquo;riak_kv_wm_stats&rdquo;
+Date: Mon, 23 Apr 2012 01:27:57 GMT
+Content-Type: text/html
+Content-Length: 616</p>
+
+<p><html><body><ul><li><a href="/buckets">riak_kv_wm_buckets</a></li><li><a href="/riak">riak_kv_wm_buckets</a></li><li><a href="/buckets">riak_kv_wm_index</a></li><li><a href="/buckets">riak_kv_wm_keylist</a></li><li><a href="/buckets">riak_kv_wm_link_walker</a></li><li><a href="/riak">riak_kv_wm_link_walker</a></li><li><a href="/mapred">riak_kv_wm_mapred</a></li><li><a href="/buckets">riak_kv_wm_object</a></li><li><a href="/riak">riak_kv_wm_object</a></li><li><a href="/ping">riak_kv_wm_ping</a></li><li><a href="/buckets">riak_kv_wm_props</a></li><li><a href="/stats">riak_kv_wm_stats</a></li></ul></body></html>%
+{% endcodeblock %}</p>
+
+<p>It’s now time to hook up the Riak Ruby client. It’s at this point that all documentation runs out and I end up reading the specs, source code and such. I lie, there is documentation on how to add nodes to the client’s initialization:</p>
+
+<p>{% codeblock riak-ruby-client lang:ruby %}</p>
+
+<h1 id="automatically-balance-between-multiple-nodes">Automatically balance between multiple nodes</h1>
+
+<p>client = Riak::Client.new(:nodes =&gt; [
+  {:host =&gt; &lsquo;10.0.0.1&rsquo;},
+  {:host =&gt; &lsquo;10.0.0.2&rsquo;, :pb_port =&gt; 1234},
+  {:host =&gt; &lsquo;10.0.0.3&rsquo;, :http_port =&gt; 5678}
+])
+{% endcodeblock %}</p>
+
+<p>The trouble here is that I went through the pain of setting up a YAML file with the database configuration and I needed to port the above to YAML syntax. Reading through the YAML documentation, I find out the syntax needed for representing the array in YAML:</p>
+
+<p>{% codeblock riak.yml %}
+development: &amp;base
+  http_backend: :Excon
+  nodes:
+    -
+      host: &lsquo;localhost&rsquo;
+      http_port: 8091
+    -
+      host: &lsquo;localhost&rsquo;
+      http_port: 8092
+    -
+      host: &lsquo;localhost&rsquo;
+      http_port: 8093
+{% endcodeblock %}</p>
+
+<p>I had to modify my homegrown code that turns string keys in hash into symbols, since the Riak client expects symbols as key types and not strings. This has caused me problems a few times, but I don’t know if it should be patched to accept either. All this being done, I expected to have full access to all nodes, reading from them and writing to them.</p>
+
+<h3 id="um-no">Um, no</h3>
+
+<p>Instead, the error I got through the client and through curl is <em>{insufficient_vnodes, 0, expected, 3}</em>. I had set up read/write values for Riak in order to control how data is replicated during writes, as well as how it’s read from the cluster.</p>
+
+<p>This terse message hints at the issue at hand. Even though I had set up the cluster as it is detailed in all of the sources I found, the nodes did not distribute the ring of hashed keys that point to data between themselves.</p>
+
+<p>The way to see what’s really going on in the cluster is to make sure that the <em>connected_nodes</em> information in the status correlates with the <em>ring_members</em> information a few rows lower. In my case, as you can see below, the two rows did not reflect the same information. The nodes seem to see and connect to each other, but they have not shared the ring of data between them and are not in a cluster.</p>
+
+<p>{% codeblock %}
+connected_nodes : [riak@192.168.33.11, riak@192.168.33.12]
+&mdash;snip 10 rows
+ring_members : [&lsquo;riak@127.0.0.1&rsquo;]
+{% endcodeblock %}</p>
+
+<p>Another tipoff is that <em>ring_num_partitions</em> number of the node you’re querying is the size of the ring you’ve set up, 64 by default. When the node is in a cluster, it has a fraction of that number, that is <em>size of the ring \/ number of nodes</em> in cluster.</p>
+
+<p>Changing the information in <em>vm.args</em> seemed to help.</p>
+
+<p>{% codeblock vm.args lang:erlang %}
+% Doesn&rsquo;t work
+-name riak@192.168.33.10</p>
+
+<p>% Works
+-name node1@192.168.33.10
+{% endcodeblock %}</p>
+
+<p>Restarting the nodes and querying each node’s <em>ring_status</em> and <em>member_status</em> shows me conflicting information. The members are picked up as expected, but the ring status still seems to refer to <em>riak@127.0.0.1</em>, which it shouldn’t. Searching through the <em>app.config</em> file, I find out where the ring information for each node is stored on the filesystem. In my case, it’s at <em>/var/lib/riak/ring</em>. Stopping the node, clearing out the files in this directory and starting the node finally, mercifully, shows me the correct information on all nodes.</p>
+
+<h3 id="finally-it-works">Finally, it works</h3>
+
+<p>Double checking whether I can query a node through curl and through Ruby confirms for me that the system now works. As I expected it, a 404 is returned for a non-existent key, a 204 responses for a successful POST and DELETE. I can now continue writing code against this system in the same way as I had done against a single node.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p><a href="https://twitter.com/pharkmillups">Mark Phillips</a>, Basho’s Director of Community, recently asked on the Riak mailing list how adoption of Riak can be improved. After going through the above, I have to say that documentation should be priority #1. I do realize that Riak is still in fast-development mode. Features are flying in every day and the core developers are continously improving stability and user-friendliness.</p>
+
+<p>Having said that, the <a href="http://docs.basho.com">wiki on Basho’s website</a> either doesn’t have all of the necessary information or it doesn’t have it organized well. It’s nearly impossible to search it intuitively. The Riak Handbook I linked to above is a better source, but it’s not free and the examples in it are written in JavaScript. I have nothing against JavaScript, but porting the examples is yet another thing I need to do to get things working in Ruby. In any case, the book cannot cover every error, such as the error I ran into here. This is information that needs to be a part of the living documentation provided by the database manufacturer themselves.</p>
+
+<p>Furthermore, the documentation for the Riak’s Ruby driver is sorely lacking. I refer to the test suite for almost every single thing I need to do with the driver, because the README does not provide examples of how to do things. This is something I will definitively help out with, since Github provides a wiki that I can contribute to. I encourage everyone else using this driver to do the same.</p>
+
+<p>I really like Riak as a database and these are all growing pains one needs to experience, I guess. I just expected it not to hurt as much as it did, :)</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

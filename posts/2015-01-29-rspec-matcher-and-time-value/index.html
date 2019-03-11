@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | RSpec matcher and time value</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="RSpec matcher and time value" />
+<meta property="og:description" content="This will be a quick post that documents an interesting find in RSpec.
+Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
+As many experienced Ruby programmers have seen, the failure looks like this:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-01-29-rspec-matcher-and-time-value/" />
+<meta property="article:published_time" content="2015-01-29T20:30:29-05:00"/>
+<meta property="article:modified_time" content="2015-01-29T20:30:29-05:00"/>
+
+<meta itemprop="name" content="RSpec matcher and time value">
+<meta itemprop="description" content="This will be a quick post that documents an interesting find in RSpec.
+Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
+As many experienced Ruby programmers have seen, the failure looks like this:">
+
+
+<meta itemprop="datePublished" content="2015-01-29T20:30:29-05:00" />
+<meta itemprop="dateModified" content="2015-01-29T20:30:29-05:00" />
+<meta itemprop="wordCount" content="391">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="RSpec matcher and time value"/>
+<meta name="twitter:description" content="This will be a quick post that documents an interesting find in RSpec.
+Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
+As many experienced Ruby programmers have seen, the failure looks like this:"/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">RSpec matcher and time value</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-01-29T20:30:29-05:00">January 29, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>This will be a quick post that documents an interesting find in RSpec.</p>
+
+<h2 id="background">Background</h2>
+
+<p>I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.</p>
+
+<p>As many experienced Ruby programmers have seen, the failure looks like this:</p>
+
+<pre><code>Failure/Error: response = put :update, {id: event.id,
+  &lt;WaitlistNotifier (class)&gt; received :alert_matching with unexpected arguments
+    expected: (Thu, 29 Jan 2015 23:56:42 UTC +00:00, Fri, 30 Jan 2015 00:01:42 UTC +00:00)
+    got: (Thu, 29 Jan 2015 23:56:42 UTC +00:00, Fri, 30 Jan 2015 00:01:42 UTC +00:00)
+</code></pre>
+
+<p>Upon closer inspection, you will notice that the values appear to be exactly the same. You may ask yourself then, &ldquo;Why is there a failure if the values are the same?&rdquo;.</p>
+
+<h2 id="equality-things">Equality things</h2>
+
+<p>One of the possible reasons why this spec failed is that while the datetime values match down to the second, they&rsquo;re probably mismatching on the millisecond. The accepted solution is to use the <em>be_within</em> matcher.</p>
+
+<pre><code class="language-ruby">it &quot;should match as close as possible&quot; do
+  expect(time_value_under_test).to be_within(0.1).of(expected_time_value)
+end
+</code></pre>
+
+<p>If you&rsquo;re comparing time or date/time values, you can stop there. However, my use case has a twist on it. Instead of comparing whether or not the time value is what I expect, I wanted to ensure that the method I&rsquo;m calling is passed the appropriate time values.</p>
+
+<pre><code class="language-ruby">class WaitlistNotifier
+  def alert_matching(datetime_start, datetime_end)
+end
+
+describe SomeController do
+  it &quot;should pass the appropriate time values to the notifier&quot; do
+      expect(WaitlistNotifier).to receive(:alert_matching).with(start_time, end_time)
+  end
+end
+</code></pre>
+
+<p>As you can see, I don&rsquo;t care if the values are equal down to the millisecond, all I care is that it&rsquo;s the appropriate value passed in. RSpec makes no such distinction, nor should it.</p>
+
+<p>Having consulted a few peeps on Twitter, including <a href="https://twitter.com/myronmarston">Myron Marston</a>, I got my answer. The <em>be_within</em> matcher can be used within a <em>with</em> call!</p>
+
+<pre><code class="language-ruby">describe SomeController do
+  it &quot;should pass the appropriate time values to the notifier&quot; do
+      expect(WaitlistNotifier).to receive(:alert_matching).
+      								with(a_value_within(1).of(start_time),
+      								     a_value_within(1).of(end_time))
+  end
+end
+</code></pre>
+
+<p>According to the <a href="http://rspec.info/documentation/3.2/rspec-expectations/RSpec/Matchers.html#be_within-instance_method">RSpec documentation</a>, <em>a_value_within</em> is an alias of <em>be_within</em>.</p>
+
+<p>I think this is a pretty cool and pretty powerful part of RSpec and I confess that I was not aware of it AT ALL.</p>
+
+<p>Hopefully, this will save someone time in the future.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings </title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+      <link href="http://example.org/posts/index.xml" rel="alternate" type="application/rss+xml" title="(Insightful) Ramblings" />
+      <link href="http://example.org/posts/index.xml" rel="feed" type="application/rss+xml" title="(Insightful) Ramblings" />
+    
+
+    <meta property="og:title" content="Posts" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="http://example.org/posts/" />
+
+<meta property="og:updated_time" content="2015-12-19T20:23:01-05:00"/>
+
+<meta itemprop="name" content="Posts">
+<meta itemprop="description" content="">
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Posts"/>
+<meta name="twitter:description" content=""/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+
+  <header>
+    <div class="pb3-m pb6-l bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv3 ph3 ph4-ns">
+        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
+          Posts
+        </h1>
+        
+      </div>
+    </div>
+  </header>
+
+
+    <main class="pb7" role="main">
+      
+  <article class="pa3 pa4-ns nested-copy-line-height nested-img">
+    <section class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy mid-gray"></section>
+    <section class="flex-ns flex-wrap justify-around mt5">
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-12-19-experiments-part-6/" class="link black dim">
+        Experiments part 6
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj's require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-12-19-experiments-part-5/" class="link black dim">
+        Experiments part 5
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Previously in Experiments, part 4,&hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&rsquo;s installment&hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&rsquo;ll have to commit to a database, but I can push that off for at least one more post.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-12-15-experiments-part-4/" class="link black dim">
+        Experiments part 4
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Previously in Experiments, part 3,&hellip; I set up a card-based UI and added a few more records to my test data set.
+In tonight&rsquo;s installment&hellip; It&rsquo;s still (mostly) about the UI. I&rsquo;m going to create a form for adding new links. I will be appending the links to the test data set and push dealing with the DB until later.
+Onward, then&hellip; Up to now, this has been a read-only app.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-12-08-experiments-part-3/" class="link black dim">
+        Experiments part 3
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Previously in Experiments, part 2,&hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
+In tonight&rsquo;s installment&hellip; It&rsquo;s all about the UI. I&rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
+Onward, then&hellip; Firstly, I&rsquo;m going to add 3 more links to my dataset so that I can play with the layout.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-12-01-experiments-part-2/" class="link black dim">
+        Experiments part 2
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Previously in Experiments,&hellip; I set up a Clojure backend and installed ReactJS front-end. I also created a basic skeleton, but that didn&rsquo;t actually show up, because JSX.
+In tonight&rsquo;s installment&hellip; Firstly, I&rsquo;m going to fix up the transpiling from JSX to JS, so that changes to the React front-end are picked up and shown. I&rsquo;ll add the expected route, but serve dummy data. Then, I&rsquo;ll get the front-end to consume that data.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-11-27-experiments/" class="link black dim">
+        Experiments, part 1
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      A different tack I&rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
+Continuing my search for that fun high, I started looking at other technologies. I&rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-09-15-passing-lambdas-as-parameters/" class="link black dim">
+        Passing lambdas as parameters
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Background At my current job, I have been working on merchants stores&rsquo; integration with third parties. As a part of this task, I found that I needed to ensure that our app batches API calls to the third party. After doing a quick measurement, I found that batching API calls lowered the processing time by about 2x-5x when compared to doing the same calls in sequential order. However, whereas sequential processing had a clear approach of dealing with successful and failed calls, the batch call had none of that.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2015-01-29-rspec-matcher-and-time-value/" class="link black dim">
+        RSpec matcher and time value
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      This will be a quick post that documents an interesting find in RSpec.
+Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
+As many experienced Ruby programmers have seen, the failure looks like this:
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2013-05-17-riak-2i-as-a-means-of-querying/" class="link black dim">
+        Riak 2i as a means of querying
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair.
+    </div>
+  </div>
+</div>
+</div>
+      
+        <div class="relative w-100 w-30-l mb4 bg-white"><div class="relative w-100 mb4 bg-white nested-copy-line-height">
+  <div class="bg-white mb3 pa4 gray overflow-hidden">
+    <span class="f6 db">Posts</span>
+    <h1 class="f3 near-black">
+      <a href="/posts/2013-05-17-riak-search-as-a-means-of-querying/" class="link black dim">
+        Riak Search as a means of querying
+      </a>
+    </h1>
+    <div class="nested-links f5 lh-copy nested-copy-line-height">
+      Introduction Up tonight, I’ll explore enhancing the querying in my app with the use of Riak Search. Basho has recently added a list-keys warning to the Ruby driver and all of my current MapReduce code is triggering it. Riak Search should help there by enabling me to reduce the set of keys in the events bucket to the ones closer to what I’m looking. Since that won’t traverse the entire bucket, I’ll avoid triggering the warning.
+    </div>
+  </div>
+</div>
+</div>
+      
+    </section>
+
+<ul class="pagination">
+    
+    <li class="page-item">
+        <a href="/posts/" class="page-link" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
+    </li>
+    
+    <li class="page-item">
+    <a href="/posts/" class="page-link" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+    </li>
+    
+    
+    
+    
+    
+    
+        
+        
+    
+    
+    <li class="page-item"><a class="page-link" href="/posts/">1</a></li>
+    
+    
+    
+    
+    
+    
+        
+        
+    
+    
+    <li class="page-item active"><a class="page-link" href="/posts/page/2/">2</a></li>
+    
+    
+    
+    
+    
+    
+        
+        
+    
+    
+    <li class="page-item"><a class="page-link" href="/posts/page/3/">3</a></li>
+    
+    
+    <li class="page-item">
+    <a href="/posts/page/3/" class="page-link" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+    </li>
+    
+    <li class="page-item">
+        <a href="/posts/page/3/" class="page-link" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+    </li>
+    
+</ul>
+</article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

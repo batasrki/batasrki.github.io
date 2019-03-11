@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Stacks and queues part 2</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Stacks and queues part 2" />
+<meta property="og:description" content="Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.
+Short background As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2016-06-26-stacks-and-queues-part-2/" />
+<meta property="article:published_time" content="2016-06-26T21:31:26-04:00"/>
+<meta property="article:modified_time" content="2016-06-26T21:31:26-04:00"/>
+
+<meta itemprop="name" content="Stacks and queues part 2">
+<meta itemprop="description" content="Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.
+Short background As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst.">
+
+
+<meta itemprop="datePublished" content="2016-06-26T21:31:26-04:00" />
+<meta itemprop="dateModified" content="2016-06-26T21:31:26-04:00" />
+<meta itemprop="wordCount" content="818">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Stacks and queues part 2"/>
+<meta name="twitter:description" content="Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.
+Short background As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Stacks and queues part 2</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2016-06-26T21:31:26-04:00">June 26, 2016</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.</p>
+
+<h2 id="short-background">Short background</h2>
+
+<p>As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst. Each element of the linked list is dynamically allocated on the heap, which means that the stack&rsquo;s size is unbounded. The tradeoff of using a linked list is increased memory size. The memory structure of each stack item needs to hold a pointer to the next item in the list, as well as the stored value.</p>
+
+<h2 id="ruby-implementation-first">Ruby implementation first</h2>
+
+<p>Ruby is a language I have far more experience in, so I&rsquo;m going to start there. I&rsquo;m going to reuse the <code>Stack</code> interface from the last post.</p>
+
+<pre><code class="language-ruby">class Stack
+  def self.push(item, store)
+    store.write(item)
+  end
+
+  def self.top(store)
+    store.read
+  end
+
+  def self.pop(store)
+    store.read(remove: true)
+  end
+
+  def self.empty?(store)
+    store.empty?
+  end
+end
+</code></pre>
+
+<p>I&rsquo;m going to supplant the <code>store</code> parameter with a linked list implementation. The linked list needs to have two things, a place to store the value and a pointer to the next item in the list.</p>
+
+<pre><code class="language-ruby">class LinkedListStackContainer
+  def initialize
+    @head = nil
+  end
+
+  def write(item)
+    node = Node.new(item, head)
+    @head = node
+  end
+
+  def read(remove: false)
+    if remove
+      first_node = @head
+      @head = @head.next
+      first_node.value
+    else
+      @head.value
+    end
+  end
+
+  def empty?
+    head.nil?
+  end
+
+  attr_accessor :head
+end
+
+class Node
+  attr_accessor :value
+
+  def initialize(item, next_node)
+    @value = item
+    @next_node = next_node
+  end
+
+  def next
+    next_node
+  end
+
+  private
+  attr_accessor :next_node
+end
+</code></pre>
+
+<p>The implementation of a linked list in an object-oriented language is straightforward. You need a <code>Node</code> that holds a <code>value</code> and a pointer to the next <code>Node</code>. A stack on top of a linked list consists of the following steps:</p>
+
+<ul>
+<li>Add a new <code>Node</code></li>
+<li>Set its <code>next_node</code> pointer to the current value of <code>head</code></li>
+<li>Set <code>head</code> to point to the new <code>Node</code></li>
+</ul>
+
+<p>With these steps completed, <code>top</code> and <code>pop</code> mean reading the value of <code>head</code> and setting <code>head</code> to the next node in the list, respectively. An empty check is just checking that <code>head</code> points to nothing.</p>
+
+<p>Here&rsquo;s how that looks like:</p>
+
+<pre><code class="language-ruby">2.3.0 :738 &gt; store = LinkedListStackContainer.new
+ =&gt; #&lt;LinkedListStackContainer:0x007f9067453838 @head=nil&gt;
+2.3.0 :739 &gt; Stack.push(1, store)
+ =&gt; #&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;
+2.3.0 :740 &gt; Stack.push(2, store)
+ =&gt; #&lt;Node:0x007f9067443b40 @value=2, @next_node=#&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;&gt;
+2.3.0 :741 &gt; Stack.top(store)
+ =&gt; 2
+2.3.0 :743 &gt; Stack.empty?(store)
+ =&gt; false
+2.3.0 :744 &gt; Stack.pop(store)
+ =&gt; 2
+2.3.0 :745 &gt; Stack.pop(store)
+ =&gt; 1
+2.3.0 :746 &gt; Stack.empty?(store)
+ =&gt; true
+</code></pre>
+
+<h2 id="clojure-implementation">Clojure implementation</h2>
+
+<p>I suspect that writing a linked list in Clojure will be just as awkward as trying to hide the array as the implementation detail in Ruby. I am going to try anyway.</p>
+
+<p>Clojure has a few macros that allow programmers to write something like OO code. I&rsquo;m talking about <a href="https://clojuredocs.org/clojure.core/defprotocol">defprotocol</a> and <a href="https://clojuredocs.org/clojure.core/defrecord">defrecord</a>. I&rsquo;m going to try using those for my experiment.</p>
+
+<p>Firstly, I&rsquo;ll define a record to hold my data. The data held is the same, a <code>value</code> and a <code>next-node</code> pointer.</p>
+
+<pre><code class="language-clojure">(defrecord StackNode [val next-node])
+</code></pre>
+
+<p>Then, I&rsquo;ll define functions that manipulate the stack. I need a helper function to resolve the top of the stack, as well as the expected ones.</p>
+
+<pre><code class="language-clojure">(defn head* [stack]
+  (cond
+    (nil? (:val stack)) nil
+    :else stack))
+
+(defn push* [item stack]
+  (cond
+    (nil? @stack) (reset! stack (StackNode. item nil))
+    :else (reset! stack (StackNode. item (head* @stack)))))
+
+(defn top* [stack]
+  (:val @stack))
+
+(defn pop* [stack]
+  (let [val (:val @stack)]
+    (reset! stack (:next-node @stack))
+    val))
+
+(defn empty*? [stack]
+  (nil? (top* stack)))
+
+</code></pre>
+
+<p>I&rsquo;m storing the current state in an <code>atom</code>, like before, which is there are <code>reset!</code> calls in the <code>push*</code> and <code>pop*</code> functions. The logic for <code>push*</code> is fairly simple. If the <code>head*</code> returns <code>nil</code>, it means we don&rsquo;t have anything on the stack, so create a new instance of the defined record. If there is something there, create a new instance of the defined record and set its <code>next-node</code> value to the old instance.</p>
+
+<p><code>pop*</code> does nearly the opposite. It saves the value of the current instance, then resets the atom such that it points to the next instance, effectively discarding the current one.</p>
+
+<p><code>empty*?</code> and <code>top*</code> should be self-explanatory. I wanted to use <code>defprotocol</code> to define the <code>read</code>, <code>write</code>, <code>empty?</code> methods as in the Ruby version, but I still don&rsquo;t fully understand how that works. Here is my desired implementation, so maybe someone can point me in the right direction.</p>
+
+<pre><code class="language-clojure">(defprotocol MyStack
+  (read* [stack &amp; args])
+  (write* [item stack])
+  (empty? [stack]))
+
+(extend-type clojure.lang.Atom
+  MyStack
+  (read* [stack &amp; {:keys [remove] :or {remove false}}]
+    (if remove
+      (pop* stack)
+      (top* stack)))
+  (write* [item stack]
+    (push* item stack))
+  (empty? [stack]
+    (empty*? stack)))
+
+(read* my-stack)
+(read* my-stack {:remove true})
+</code></pre>
+
+<p>That&rsquo;s it for tonight. Next up, I&rsquo;ll try on the queues for a size.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

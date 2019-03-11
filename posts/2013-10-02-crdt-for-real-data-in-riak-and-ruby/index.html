@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | CRDT for real data in Riak and Ruby</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="CRDT for real data in Riak and Ruby" />
+<meta property="og:description" content="Intro In the previous post, I briefly introduced CRDTs in Ruby and have shown a basic usage case for one Conflict-Free Replicated Data Type. Tonight, we will explore one slightly more complicated use case that can be seen in real applications in the wild.
+Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clone. We have accounts and we have movies. For the purposes of recommendations, we want to store what movies each account holder has viewed." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-10-02-crdt-for-real-data-in-riak-and-ruby/" />
+
+
+<meta itemprop="name" content="CRDT for real data in Riak and Ruby">
+<meta itemprop="description" content="Intro In the previous post, I briefly introduced CRDTs in Ruby and have shown a basic usage case for one Conflict-Free Replicated Data Type. Tonight, we will explore one slightly more complicated use case that can be seen in real applications in the wild.
+Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clone. We have accounts and we have movies. For the purposes of recommendations, we want to store what movies each account holder has viewed.">
+
+
+
+<meta itemprop="wordCount" content="1545">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="CRDT for real data in Riak and Ruby"/>
+<meta name="twitter:description" content="Intro In the previous post, I briefly introduced CRDTs in Ruby and have shown a basic usage case for one Conflict-Free Replicated Data Type. Tonight, we will explore one slightly more complicated use case that can be seen in real applications in the wild.
+Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clone. We have accounts and we have movies. For the purposes of recommendations, we want to store what movies each account holder has viewed."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">CRDT for real data in Riak and Ruby</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="0001-01-01T00:00:00Z">January 1, 0001</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="intro">Intro</h2>
+
+<p>In the <a href="http://batasrki.github.io/blog/2013/07/29/crdt-primer-in-riak-and-ruby/">previous post</a>, I briefly introduced CRDTs in Ruby and have shown a basic usage case for one Conflict-Free Replicated Data Type. Tonight, we will explore one slightly more complicated use case that can be seen in real applications in the wild.</p>
+
+<h2 id="use-case">Use case</h2>
+
+<p>For the purpose of this post, imagine we&rsquo;re running a Netflix clone. We have accounts and we have movies. For the purposes of recommendations, we want to store what movies each account holder has viewed. As is the case with Netflix, an account may be signed in and used across more than one device by holders of differing tastes. Since we don&rsquo;t really want to impose the restriction of just one account being signed in, we will record statistics from each session.</p>
+
+<p>As you can see, this may lead to write conflicts, since any account holder may want to watch any movie at any time. For the sake of efficiency, we will only store an ID to each movie in the account&rsquo;s <strong>movies watched</strong> collection.</p>
+
+<h2 id="the-data-type-used">The data type used</h2>
+
+<p>Out of the currently known CRDTs, the one that seems to fit this problem the best is the GSet, or Grow-only Set, data type. As its name suggests, this CRDT only ever grows in size, it does not shrink. Since recommendation engines thrive on tonnes of data, having an ever-increasing set of records is very beneficial.</p>
+
+<p>The basic layout of a GSet is as follows:</p>
+
+<pre><code class="language-json">{
+  'type': 'g-set',
+  'e': ['a', 'b', 'c']
+}
+
+</code></pre>
+
+<p>The type information there is for the <a href="https://github.com/aphyr/meangirls">meangirls library</a> to invoke the correct operational semantics. Other than that, it&rsquo;s just a simple list of data, always growing in size. Only, the <strong>meangirls</strong> library does not include a class for a GSet. It has a class for TwoPhaseSet, which is a combination of two GSets, but it doesn&rsquo;t actually implement a GSet by itself.</p>
+
+<p>That&rsquo;s not a big deal, we will implement one ourselves.</p>
+
+<h2 id="gset-implementation">GSet implementation</h2>
+
+<p>Since it has fairly simple requirement, let&rsquo;s take a look at the GSet class. I&rsquo;ll explain parts of it after the code listing.</p>
+
+<pre><code class="language-ruby">class GSet &lt; Meangirls::Set
+  attr_accessor :a
+
+  def initialize(hash=nil)
+    if hash
+      raise ArgumentError, &quot;hash must contain a&quot; unless hash['a']
+
+      @a = Set.new hash['a']
+    else
+      # Empty set
+      @a = Set.new
+    end
+  end
+
+  def &lt;&lt;(e)
+    @a &lt;&lt; e
+    self
+  end
+  alias add &lt;&lt;
+
+  def ==(other)
+    other.kind_of?(self.class) &amp;&amp; a == other.a
+  end
+
+  def as_json
+    {
+      'type' =&gt; type,
+      'a' =&gt; a.to_a 
+    }
+  end
+
+  def clone
+    c = super
+    c.a = a.clone
+    c
+  end
+
+  def merge(other)
+    unless other.kind_of? self.class
+      raise ArgumentError, &quot;other must be a #{self.class}&quot;
+    end
+
+    self.class.new('a' =&gt; (a | other.a))
+  end
+
+  def include?(e)
+    @a.include? e
+  end
+
+  def to_set
+    @a
+  end
+
+  def type
+    'g-set'
+  end
+end
+</code></pre>
+
+<p>If you peek at <strong>meangirls</strong> implementation of a <code>TwoPhaseSet</code>, you will notice that we copied most of its code into here, save for the <em>remove set</em> logic. Let&rsquo;s go through the important parts.</p>
+
+<pre><code class="language-ruby">def initialize(hash=nil)
+  if hash
+    raise ArgumentError, &quot;hash must contain a&quot; unless hash['a']
+
+    @a = Set.new hash['a']
+  else
+    # Empty set
+    @a = Set.new
+  end
+end
+</code></pre>
+
+<p>Our constructor may or may not take a hash. This is done, so that we can re-construct a <code>GSet</code> from JSON data, such as a Riak record.</p>
+
+<pre><code class="language-ruby">def &lt;&lt;(e)
+  @a &lt;&lt; e
+  self
+end
+alias add &lt;&lt;
+</code></pre>
+
+<p>We only ever add elements to our <code>GSet</code>. Additional guarantees, like that an element can only be an Integer, can be added here.</p>
+
+<pre><code class="language-ruby">def merge(other)
+  unless other.kind_of? self.class
+    raise ArgumentError, &quot;other must be a #{self.class}&quot;
+  end
+
+  self.class.new('a' =&gt; (a | other.a))
+end
+</code></pre>
+
+<p>When merging, we first must ensure that we&rsquo;re merging a <code>GSet</code> to a <code>GSet</code>. We would get into weird situations and breakage, otherwise. After that, a simple set union over our 2 sets of IDs will ensure we only ever have unique ID values here.</p>
+
+<h2 id="setup">Setup</h2>
+
+<p>With that done, let&rsquo;s add models for the <code>Account</code> records and <code>Movie</code> records. Persistence is done somewhere else. This time, we will store records through irb.</p>
+
+<pre><code class="language-ruby">class Account
+  attr_accessor :username, :email, :movies_watched
+
+  def initialize(hash=nil)
+    if hash
+      @username = hash[&quot;username&quot;]
+      @email = hash[&quot;email&quot;]
+      @movies_watched = GSet.new(hash[&quot;movies_watched&quot;])
+    else
+      @movies_watched = GSet.new
+    end
+  end
+
+  def as_json
+    {
+      &quot;username&quot; =&gt; username,
+      &quot;email&quot; =&gt; email,
+      &quot;movies_watched&quot; =&gt; movies_watched.as_json
+    }
+  end
+
+  def to_json
+    as_json.to_json
+  end
+end
+</code></pre>
+
+<pre><code class="language-ruby">class Movie
+  attr_accessor :title
+
+  def initialize(hash=nil)
+    if hash
+      @title = hash[&quot;title&quot;]
+    end
+  end
+
+  def as_json
+    {
+      &quot;title&quot; =&gt; title
+    }
+  end
+
+  def to_json
+    as_json.to_json
+  end
+end
+</code></pre>
+
+<p>Let&rsquo;s store a few arbitrary movies, keep their keys in memory and cause a write conflict. We will then see how we can resolve this conflict through the usage of our CRDT.</p>
+
+<pre><code class="language-ruby">movie_bucket = client.bucket(&quot;movies&quot;)
+ =&gt; #&lt;Riak::Bucket {movies}&gt;
+
+movie_record_keys = []
+
+m1 = Movie.new(&quot;title&quot; =&gt; &quot;Test Movie&quot;)
+ =&gt; #&lt;Movie:0x007ffa0be21348 @title=&quot;Test Movie&quot;&gt;
+
+m2 = Movie.new(&quot;title&quot; =&gt; &quot;Another test movie&quot;)
+ =&gt; #&lt;Movie:0x007ffa0be43ba0 @title=&quot;Another test movie&quot;&gt;
+
+r1 = movie_bucket.new
+ =&gt; #&lt;Riak::RObject {movies} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
+
+r1.data = m1.as_json
+ =&gt; {&quot;title&quot;=&gt;&quot;Test Movie&quot;}
+
+r1.store
+ =&gt; #&lt;Riak::RObject {movies,CAQ3ewkn0vVI5q8Kxt4LPcrFYk9} [#&lt;Riak::RContent [application/json]:{&quot;title&quot;=&gt;&quot;Test Movie&quot;}&gt;]&gt;
+
+movie_record_keys &lt;&lt; r1.key
+
+r2 = movie_bucket.new
+ =&gt; #&lt;Riak::RObject {movies} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
+
+r2.data = m2.as_json
+ =&gt; {&quot;title&quot;=&gt;&quot;Another test movie&quot;}
+
+r2.store
+ =&gt; #&lt;Riak::RObject {movies,aU6uCCZJ10xGIPJonpSYftZ4H0w} [#&lt;Riak::RContent [application/json]:{&quot;title&quot;=&gt;&quot;Another test movie&quot;}&gt;]&gt;
+
+movie_record_keys &lt;&lt; r2.key
+ =&gt; [&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;, &quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]
+</code></pre>
+
+<p>OK, now we have two movies, so let&rsquo;s simulate a simultaneous account access by 2 holders, each of which is watching a movie. As shown in the previous post, storing values at the same time will cause a write conflict, resulting in creation of siblings. As usual, the <code>accounts</code> bucket should have <code>allow_mult</code> set to <strong>true</strong>, so that Riak doesn&rsquo;t discard one of the writes.</p>
+
+<p>Let&rsquo;s first create an account.</p>
+
+<pre><code class="language-ruby">accounts_bucket = client.bucket(&quot;accounts&quot;)
+ =&gt; #&lt;Riak::Bucket {accounts}&gt;
+
+accounts_bucket.allow_mult = true
+ =&gt; true
+
+account = Account.new
+ =&gt; #&lt;Account:0x007ffa0ce89758 @movies_watched=#&lt;GSet:0x007ffa0ce89730 @a=#&lt;Set: {}&gt;&gt;&gt;
+
+account.username = &quot;an-user&quot;
+ =&gt; &quot;an-user&quot;
+account.email = &quot;anuser@email.com&quot;
+ =&gt; &quot;anuser@email.com&quot;
+
+record = accounts_bucket.new
+ =&gt; #&lt;Riak::RObject {accounts} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
+
+record.data = account.as_json
+ =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}
+
+record.store
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}&gt;]&gt;
+</code></pre>
+
+<p>OK, with the record stored, we retrieve it twice without updating. This ensures that the <code>vclock</code> value for the record is not updated, allowing us the opportunity to cause a write conflict.</p>
+
+<pre><code class="language-ruby">one_access = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}&gt;]&gt;
+
+# same as above
+second_access = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+
+first_instance = Account.new(one_access.data)
+ =&gt; #&lt;Account:0x007ffa0cf2b710 @movies_watched=#&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {}&gt;&gt;, @username=&quot;an-user&quot;, @email=&quot;anuser@email.com&quot;&gt;
+
+second_instance = Account.new(second_access.data)
+</code></pre>
+
+<p>Let&rsquo;s now add the ID of the first created movie to one instance of this <code>Account</code> record and the ID of the second movie to the other one.</p>
+
+<pre><code class="language-ruby">first_instance.movies_watched.add(movie_record_keys.first)
+ =&gt; #&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;}&gt;&gt;
+
+second_instance.movies_watched &lt;&lt; movie_record_keys.last
+ =&gt; #&lt;GSet:0x007ffa0cf31f70 @a=#&lt;Set: {&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;}&gt;&gt;
+</code></pre>
+
+<p>Let&rsquo;s now try storing these objects back into Riak and seeing what happens.</p>
+
+<pre><code class="language-ruby">one_access.data = first_instance.as_json
+ =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}
+
+one_access.store
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+
+second_access.data = second_instance.as_json
+ =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}
+
+second_access.store
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}&gt;, #&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+</code></pre>
+
+<p>And, there we go. We have successfully (again) caused a conflict. Let&rsquo;s write some code to resolve it. The trick here to resolving conflicts like this is that you must not access the <code>data</code> nor the <code>raw_data</code> methods. These will throw an exception and mess up your day.</p>
+
+<p>Let&rsquo;s instead, introduce a class method in the <code>Account</code> model that will handle conflict resolution for us.</p>
+
+<pre><code class="language-ruby">class Account
+  # existing methods
+  #
+  #
+  #
+  def self.from_persistence(obj)
+    if obj.conflict?
+      resolved = {}
+      watched_lists = []
+      obj.siblings.each do |sibling|
+        watched_lists &lt;&lt; sibling.data.delete(&quot;movies_watched&quot;)
+        resolved.merge!(sibling.data)
+      end
+
+      first_one = GSet.new(watched_lists.shift)
+      watched_lists.each {|list| first_one = first_one.merge(GSet.new(list))}
+
+      resolved.merge!(&quot;movies_watched&quot; =&gt; first_one.as_json)
+      new(resolved)
+    else
+      new(obj.data)
+    end
+  end
+end
+</code></pre>
+
+<p>In this method, we check first if the raw record coming from Riak has the <code>conflict?</code> flag set, which indicates that there&rsquo;s been a write conflict somewhere. If it is, we loop through all the <code>siblings</code> and pull out the <strong>movies_watched</strong> lists. The rest of this record should not be subject to conflict resolution, so we will accept whatever values there are for them.</p>
+
+<p>We then initialize the first item in the list of <code>GSet</code>s and then merge the others in that list with the first one. We append this to the hash of resolved values and then instantiate our <code>Account</code> model with the new values.</p>
+
+<p>The second part to this conflict resolution is storing the resolved object back into Riak. Again, as in the previous post, we do that by creating a new <code>Riak::RObject</code> instance, setting its key to the conflicted one and setting the <code>siblings</code> property of the conflicted instance to an array of <code>Riak::RObject</code>s of size 1. The only member is the new instance. We store that and we&rsquo;re done.</p>
+
+<pre><code class="language-ruby">record = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}&gt;, #&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+
+a = Account.from_persistence(record)
+ =&gt; #&lt;Account:0x007ff318320c68 @username=&quot;an-user&quot;, @email=&quot;anuser@email.com&quot;, @movies_watched=#&lt;GSet:0x007ff318320bc8 @a=#&lt;Set: {&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;}&gt;&gt;&gt;
+
+resolved = accounts_bucket.new
+ =&gt; #&lt;Riak::RObject {accounts} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
+
+resolved.data = a.as_json
+ =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}
+
+resolved.key = record.key
+ =&gt; &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+
+record.siblings = [resolved]
+ =&gt; [#&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;]
+
+record.store
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+</code></pre>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Hopefully, this has shed a bit more light on how CRDTs can be used in real applications. The big key here is that during data model design, a need for conflict resolution must be anticipated and then the data, or parts of it, must be structured as a CRDT. Once that is done, merging conflicted records is pretty easy and availability is preserved.</p>
+
+<p>Until next time.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 7</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 7" />
+<meta property="og:description" content="Previously in Experiments, part 6,&hellip; I used core.async to background a slow task, namely fetching the HTML of the saved URL and parsing out the &lt;title&gt; tag.
+Up next&hellip; I need to do a bit of yak-shaving. As I alluded to before, I want to use Server-sent Events, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&rsquo;ve used Compojure, but after reading up on SSE and Clojure, I have been convinced that I need to use either Pedestal or yada." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-12-21-experiments-part-7/" />
+<meta property="article:published_time" content="2015-12-21T21:52:24-05:00"/>
+<meta property="article:modified_time" content="2015-12-21T21:52:24-05:00"/>
+
+<meta itemprop="name" content="Experiments part 7">
+<meta itemprop="description" content="Previously in Experiments, part 6,&hellip; I used core.async to background a slow task, namely fetching the HTML of the saved URL and parsing out the &lt;title&gt; tag.
+Up next&hellip; I need to do a bit of yak-shaving. As I alluded to before, I want to use Server-sent Events, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&rsquo;ve used Compojure, but after reading up on SSE and Clojure, I have been convinced that I need to use either Pedestal or yada.">
+
+
+<meta itemprop="datePublished" content="2015-12-21T21:52:24-05:00" />
+<meta itemprop="dateModified" content="2015-12-21T21:52:24-05:00" />
+<meta itemprop="wordCount" content="717">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 7"/>
+<meta name="twitter:description" content="Previously in Experiments, part 6,&hellip; I used core.async to background a slow task, namely fetching the HTML of the saved URL and parsing out the &lt;title&gt; tag.
+Up next&hellip; I need to do a bit of yak-shaving. As I alluded to before, I want to use Server-sent Events, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&rsquo;ve used Compojure, but after reading up on SSE and Clojure, I have been convinced that I need to use either Pedestal or yada."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 7</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-12-21T21:52:24-05:00">December 21, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-6-https-batasrki-github-io-blog-2015-12-19-experiments-part-6">Previously in <a href="https://batasrki.github.io/blog/2015/12/19/experiments-part-6">Experiments, part 6</a>,&hellip;</h2>
+
+<p>I used <code>core.async</code> to background a slow task, namely fetching the HTML of the saved URL and parsing out the <code>&lt;title&gt;</code> tag.</p>
+
+<h2 id="up-next">Up next&hellip;</h2>
+
+<p>I need to do a bit of yak-shaving. As I alluded to before, I want to use <a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-sent Events</a>, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&rsquo;ve used <a href="https://github.com/weavejester/compojure">Compojure</a>, but after reading up on SSE and Clojure, I have been convinced that I need to use either <a href="https://github.com/pedestal/pedestal">Pedestal</a> or <a href="https://github.com/juxt/yada">yada</a>.</p>
+
+<p>After doing a little bit of research, I feel that Pedestal will suit me better as it uses <code>core.async</code> to do all of its async things and hey, <strong>I&rsquo;m using that, too</strong>! With that settled, I am now realizing that I need to port all of my currently written code to this new way of doing things. There doesn&rsquo;t seem to be a magical &ldquo;take this Compojure app and make it a Pedestal app&rdquo; command in Leiningen, so I am left with a few options. I think what I&rsquo;ll do is generate a Pedestal app, then copy over the generated bits into the current app and smush them together. I hope it works!</p>
+
+<h2 id="go-go-go-lein-generator">Go, go, go, lein generator!</h2>
+
+<p>OK, in a directory above the current app directory, I need to run the Leiningen generator.</p>
+
+<pre><code>lein new pedestal-app prototype
+</code></pre>
+
+<p>This goes and does things and now I have a new directory. I now need to copy over bits from <code>project.clj</code>, the whole <code>server.clj</code> and <code>service.clj</code>, the <code>config</code>, <code>log</code>, and <code>target</code> directories. Then, in the new <code>service.clj</code> file, I need to copy over the code from <code>handler.clj</code>. All in all, this is how the project and service files look like.</p>
+
+<pre><code class="language-clojure">(defproject blog-post-app &quot;0.0.1&quot;
+  :description &quot;ReactJS bookmarker backed by experimental Clojure stuff&quot;
+  :url &quot;http://particletransporter.io&quot;
+  :min-lein-version &quot;2.0.0&quot;
+  :dependencies [[org.clojure/clojure &quot;1.7.0&quot;]
+                 [org.clojure/data.json &quot;0.2.6&quot;]
+                 [org.clojure/core.async &quot;0.2.374&quot;]
+                 ;;[compojure &quot;1.4.0&quot;]
+
+                 [io.pedestal/pedestal.service &quot;0.4.1&quot;]
+                 [io.pedestal/pedestal.jetty &quot;0.4.1&quot;]
+                 [ch.qos.logback/logback-classic &quot;1.1.3&quot; :exclusions [org.slf4j/slf4j-api]]
+                 [org.slf4j/jul-to-slf4j &quot;1.7.12&quot;]
+                 [org.slf4j/jcl-over-slf4j &quot;1.7.12&quot;]
+                 [org.slf4j/log4j-over-slf4j &quot;1.7.12&quot;]
+
+                 [enlive &quot;1.1.5&quot;]
+                 [hiccup &quot;1.0.5&quot;]]
+  :resource-paths [&quot;config&quot; &quot;resources&quot;]
+  :uberjar-name &quot;blog-post-app.jar&quot;
+  :profiles
+  {:dev {:dependencies [[io.pedestal/pedestal.service-tools &quot;0.4.1&quot;]
+                        [cider/cider-nrepl &quot;0.10.0&quot;]]}
+   :uberjar {:aot [blog-post-app.server]}}
+  :main ^{:skip-aot true} blog-post-app.server)
+</code></pre>
+
+<pre><code class="language-clojure">(ns blog-post-app.service
+  (:require [io.pedestal.http :as bootstrap]
+            [io.pedestal.http.route :as route]
+            [io.pedestal.http.body-params :as body-params]
+            [io.pedestal.http.route.definition :refer [defroutes]]
+            [io.pedestal.log :as log]
+            [ring.util.response :as ring-resp]
+            [clojure.data.json :as json]
+            [clojure.core.async :as async :refer [&gt;! &lt;! go chan]]
+            [net.cgrand.enlive-html :as html]
+            [blog-post-app.views :as views]))
+
+(def links (atom '({:id 1 :url &quot;https://google.ca&quot; :title &quot;Google&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
+                   {:id 2 :url &quot;https://twitter.com&quot; :title &quot;Twitter&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
+                   {:id 3 :url &quot;https://github.com&quot; :title &quot;Github&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
+                   {:id 4 :url &quot;https://www.shopify.ca&quot; :title &quot;Shopify&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
+                   {:id 5 :url &quot;https://www.youtube.com&quot; :title &quot;YouTube&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;})))
+
+(defn fetch-url [url]
+  (with-open [inputstream (-&gt; (java.net.URL. url)
+                              .openConnection
+                              (doto (.setRequestProperty &quot;User-Agent&quot;
+                                                         &quot;ReadLaterCrawler/1.0 ...&quot;))
+                              .getContent)]
+    (html/html-resource inputstream)))
+
+(defn get-title [url]
+  (first (map html/text (html/select (fetch-url url) [:title]))))
+
+(def request-chan (chan))
+(def title-chan (chan))
+
+(defn update-title [data record]
+  (map #(if (= (:id record) (:id %))
+          (assoc % :title (:title record))
+          %) data))
+(defn update-atom []
+  (go
+   (let [record (&lt;! title-chan)]
+     (log/trace &quot;Got title&quot; (:title record))
+     (log/trace &quot;Updating the atom&quot;)
+     (swap! links update-title record))))
+
+(defn async-get-title []
+  (go
+   (let [record (&lt;! request-chan)]
+     (log/trace &quot;Got the request, processing....&quot;)
+     (&gt;! title-chan (assoc record :title (get-title (:url record)))))))
+
+(defn async-request-title [new-link]
+  (go
+   (log/trace &quot;Putting the request on channel&quot;)
+   (&gt;! request-chan new-link)))
+
+(defn home-page
+  [request]
+  (async-get-title)
+  (update-atom)
+  (ring-resp/response (views/index)))
+
+(defn list-links
+  [request]
+  (ring-resp/response (json/write-str @links)))
+
+(defn create-link
+  [request]
+  (let [next-id (inc (apply max (map #(:id %) @links)))
+        new-link (:json-params request)
+        new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-21&quot;)]
+    (async-request-title new-link-with-fields)
+    (swap! links conj new-link-with-fields)
+    (ring-resp/response (json/write-str @links))))
+
+(defroutes routes
+  ;; Defines &quot;/&quot; and &quot;/about&quot; routes with their associated :get
+  ;; handlers.
+  ;; The interceptors defined after the verb map (e.g., {:get
+  ;; home-page}
+  ;; apply to / and its children (/about).
+  [[[&quot;/&quot; {:get home-page}
+     ^:interceptors [(body-params/body-params) bootstrap/html-body]
+     [&quot;/about&quot; {:get about-page}]
+     [&quot;/api/links&quot; {:get list-links
+                    :post create-link}
+      ^:interceptors [bootstrap/json-body]]]]])
+(def service {:env :prod
+              ::bootstrap/routes routes
+              ::bootstrap/resource &quot;/public&quot;
+              ::bootstrap/type :jetty
+              ::bootstrap/port 8080})
+</code></pre>
+
+<p>With that, I start the REPL and run the server from it.</p>
+
+<pre><code class="language-bash">lein repl
+</code></pre>
+
+<pre><code class="language-clojure">(server/start runnable-service)
+</code></pre>
+
+<h2 id="a-proof-in-form-of-a-gif">A proof in form of a GIF</h2>
+
+<p><img src="/images/pedestal.gif" alt="pedestal" /></p>
+
+<p>That&rsquo;s it for now. The stage is set up for SSE, which will be the next thing I tackle. Until then.</p>
+
+<p>P.S.</p>
+
+<p>I deployed the app to Heroku, <a href="https://cljrjs.herokuapp.com">here</a>. The code can be seen <a href="https://github.com/batasrki/blog-post-app">here</a>.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

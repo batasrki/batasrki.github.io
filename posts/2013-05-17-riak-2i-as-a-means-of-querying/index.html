@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Riak 2i as a means of querying</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Riak 2i as a means of querying" />
+<meta property="og:description" content="Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2013-05-17-riak-2i-as-a-means-of-querying/" />
+<meta property="article:published_time" content="2012-05-23T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2012-05-23T00:00:00&#43;00:00"/>
+
+<meta itemprop="name" content="Riak 2i as a means of querying">
+<meta itemprop="description" content="Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair.">
+
+
+<meta itemprop="datePublished" content="2012-05-23T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2012-05-23T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="767">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Riak 2i as a means of querying"/>
+<meta name="twitter:description" content="Introduction Up tonight, I will explore how different Riak’s secondary indexes feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce. Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Riak 2i as a means of querying</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2012-05-23T00:00:00Z">May 23, 2012</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Up tonight, I will explore how different Riak’s <a href="http://wiki.basho.com/Secondary-Indexes.html">secondary indexes</a> feature is from Riak Search in the context of a query. I will be using the same structure as in my post on Riak Search and Map/Reduce.
+Riak’s secondary indexes have a different setup than Riak Search. Whereas search had to be enabled on each node in turn, secondary indexes (or 2i from now on) are stored as metadata on each key/value pair. There are a few advantages to this approach and, at this present moment, a few disadvantages.</p>
+
+<h2 id="easier-integration">Easier integration</h2>
+
+<p>The major disadvantage of Riak Search, in my mind, is that you have to know that you will need it before you start putting data into Riak. There is no way, right now, to index existing data in order to take advantage of the wonderful capabilities Riak Search offers. At this point in time, the only two ways to add the index is to blow away your dataset, enable search and restore from backup or stream keys and their values through the system after turning Riak Search on. I, admittedly, don’t fully understand the latter option, so when I decided to use Riak Search in my app, I did the former. It may not be possible for everyone to do so.
+2i, on the other hand, is stored per key. This means that when you’re ready to add 2i to your data, it’s as simple as reading in a key, adding the index through the application layer and re-saving the data, illustrated below.</p>
+
+<p>{% codeblock add index - event.rb %}
+class Event
+  def add_indexes(key)
+    event = Event.find(key)
+    event.indexes[&lsquo;month_year_bin&rsquo;] &lt;&lt; &ldquo;#{event.month}-#{event.year}&rdquo;
+    event.indexes[&lsquo;year_month_int&rsquo;] &lt;&lt; &ldquo;#{event.year}-#{event.month}&rdquo;.to_i
+  end
+end
+{% endcodeblock %}</p>
+
+<p>I’ve added two indexes that look the same for illustration purposes, as well as, because I’m unsure exactly how I will use them yet. Besides, deleting an unwanted index is as easy as deleting a key from a hash.</p>
+
+<p>{% codeblock delete index - event.rb %}
+event = Event.find(&ldquo;somekey&rdquo;)
+event.indexes.delete(&ldquo;month_year_bin&rdquo;)
+event.save
+{% endcodeblock %}</p>
+
+<p>It can be done while the system is up and running and serving users. This is a major boost in convenience.</p>
+
+<h2 id="querying">Querying</h2>
+
+<p>There are a several ways I can select a collection of keys from 2i.</p>
+
+<h3 id="equality">equality</h3>
+
+<p>The simplest is the equality query.</p>
+
+<p>{% codeblock 2i m/r integration - event.rb %}
+job = Riak::MapReduce.new(Event.client)
+job.index(&ldquo;events&rdquo;, &ldquo;year_month_int&rdquo;, &ldquo;#{event.year}#{event.month}&rdquo;.to_i)
+job.map(&ldquo;function(value, keydata, arg){ var data = Riak.mapValuesJson(value)[0]; if(data.location === \&rdquo;\&ldquo;) {return [data];} else{ return [];} }&ldquo;, :keep =&gt; true)
+job.run</p>
+
+<p>#returns
+[{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2011-08-13T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}, {&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2011-08-09T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}]</p>
+
+<p>{% endcodeblock %}</p>
+
+<p>All right. I like that. I think I’ll keep the int index and drop the bin one. It’s easier to construct and I think it’s more efficient.</p>
+
+<h3 id="range">range</h3>
+
+<p>Even better, the int index type enables me to do a range query easily. For example, let’s add another index that stores the day, along with month and year of an event and then select all of the events in the month range.</p>
+
+<p>{% codeblock 2i m/r integration v2 - event.rb %}
+event.indexes[&ldquo;year_month_day_int&rdquo;] &lt;&lt; &ldquo;#{event.year}#{event.month}#{event.day}&rdquo;.to_i</p>
+
+<p>#and then
+job = Riak::MapReduce.new(Event.client)
+job.index(&ldquo;events&rdquo;, &ldquo;year_month_day_int&rdquo;, 201181..2011831)
+job.map(&ldquo;function(value, keydata, arg){ var data = Riak.mapValuesJson(value)[0]; if(data.location === \&rdquo;\&ldquo;) {return [data];} else{ return [];} }&ldquo;, :keep =&gt; true)
+job.run</p>
+
+<p>#returns
+[{&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2011-08-13T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}, {&ldquo;category&rdquo;=&gt;&ldquo;business&rdquo;, &ldquo;event_date&rdquo;=&gt;&ldquo;2011-08-09T00:00:00+00:00&rdquo;, &ldquo;location&rdquo;=&gt;&ldquo;&rdquo;}]</p>
+
+<p>{% endcodeblock %}</p>
+
+<p>That’s very nice. This enables me to offer to my users a weekly view of their data, as well as a monthly one. I don’t think I can manage that with Riak Search.
+There is also another type of index, the multi-valued index, <a href="https://github.com/basho/riak-ruby-client/wiki/Secondary-Indexes">whose usage is detailed</a> on the GitHub wiki. As usual, the results returned are piped back into my domain object which pulls out keys and values and creates out of them something I can use in the rest of the system.</p>
+
+<h2 id="disadvantages">Disadvantages</h2>
+
+<p>The main disadvantage, for me, is the inability to combine multiple secondary indexes to pull out data. Ideally, I would love to only query by index without having to have a portion of my code in Javascript or Erlang to do the additional filtering. Also, as of right now, there is no consistent ordering of the keys selected through the index. That will be <a href="https://gist.github.com/2721295">corrected later</a>, but it is something that I need to be careful of right now.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>I think I’ll be able to live with the disadvantages as they are. I am not a real power user as far as I’ve seen and the current, minimal abilities of both Riak Search and Riak 2i suit me well.
+Well, I’m off to build the front-end for the new goodies I discovered writing this post. Until the next time.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

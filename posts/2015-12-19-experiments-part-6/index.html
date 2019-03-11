@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 6</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 6" />
+<meta property="og:description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-12-19-experiments-part-6/" />
+<meta property="article:published_time" content="2015-12-19T20:23:01-05:00"/>
+<meta property="article:modified_time" content="2015-12-19T20:23:01-05:00"/>
+
+<meta itemprop="name" content="Experiments part 6">
+<meta itemprop="description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.">
+
+
+<meta itemprop="datePublished" content="2015-12-19T20:23:01-05:00" />
+<meta itemprop="dateModified" content="2015-12-19T20:23:01-05:00" />
+<meta itemprop="wordCount" content="709">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 6"/>
+<meta name="twitter:description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 6</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-12-19T20:23:01-05:00">December 19, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-5-https-batasrki-github-io-blog-2015-12-19-experiments-part-5">Previously in <a href="https://batasrki.github.io/blog/2015/12/19/experiments-part-5">Experiments, part 5</a>,&hellip;</h2>
+
+<p>I added a synchronous way of fetching a title from an HTML page, using Enlive.</p>
+
+<h2 id="let-s-async-this-thing">Let&rsquo;s async this thing</h2>
+
+<p>OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce <code>core.async</code>.</p>
+
+<pre><code class="language-clojure">;; in project.clj
+[org.clojure/core.async &quot;0.2.374&quot;]
+
+;; in handler.clj's require
+(:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])
+</code></pre>
+
+<p>This library is based on concepts presented in a book called <a href="http://www.usingcsp.com/cspbook.pdf">Communicating Sequential Processes</a>. The core premise is that certain types of tasks can be handed off to a different process/thread, much like how web developers use background queues to do tasks like sending e-mail, etc. The beautiful thing about Clojure&rsquo;s implementation is that it&rsquo;s just a set of macros around core language features. That book is really worth reading. I am saying that more to myself than anyone else reading this.</p>
+
+<p>Using this library, I am going to set up a pipeline that does the synchronous fetch-and-parse in an asynchronous way. For that, I need to set up 2 channels and a few functions that put values and take values from the channel and update things in the background.</p>
+
+<pre><code class="language-clojure">(def request-chan (chan))
+(def title-chan (chan))
+
+(defn update-title [data record]
+  (map #(if (= (:id record) (:id %))
+          (assoc % :title (:title record))
+          %) data))
+
+(defn update-atom []
+  (go
+   (let [record (&lt; ! title-chan)]
+     (println &quot;Got title&quot; (:title record))
+     (println &quot;Updating the atom&quot;)
+     (swap! links update-title record))))
+
+(defn async-get-title []
+  (go
+   (let [record (&lt; ! request-chan)]
+     (println &quot;Got the request, processing....&quot;)
+     (&gt;! title-chan (assoc record :title (get-title (:url record)))))))
+
+(defn async-request-title [new-link]
+  (go
+   (println &quot;Putting the request on channel&quot;)
+   (&gt;! request-chan new-link)))
+</code></pre>
+
+<p>Reading from the bottom up, the code does the following steps.</p>
+
+<ol>
+<li>Put the newly created link record to the <code>request-chan</code> channel</li>
+<li>Take the record off the <code>request-chan</code> channel, fetch the title from the HTML page, put the update onto <code>title-chan</code> channel</li>
+<li>Take the updated record of <code>title-chan</code> channel, update the <code>links</code> atom.</li>
+</ol>
+
+<p>Because the update is done in the background, I won&rsquo;t see the effect until server reload, but that&rsquo;s fine for now. I have plans for that (did someone say <a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-sent Events</a>). Programming can be so much fun, sometimes.</p>
+
+<p>I want to explain the <code>update-title</code> function before moving on, though. Here&rsquo;s the source for it, again.</p>
+
+<pre><code class="language-clojure">(defn update-title [data record]
+  (map #(if (= (:id record) (:id %))
+          (assoc % :title (:title record))
+          %) data))
+
+;; called with
+;; (swap! links update-title record)
+</code></pre>
+
+<p>The function loops over the list of links, which are represented as hashmaps. If the <code>id</code> of the current item is equal to the one we want to update, we update the <code>title</code> value. If not, we keep just copy the link map into the new data set. I admit, this is a lot of rigmarole, but again, it&rsquo;s fun to try not use a database as a crutch. Once I do commit to having a database, this code will likely go away.</p>
+
+<h2 id="integrating-the-new-way">Integrating the new way</h2>
+
+<p>Now that there&rsquo;s a way for me to update the atom, I need to integrate that into the flow of a web request.</p>
+
+<pre><code class="language-clojure">(GET &quot;/&quot; []
+  (async-get-title)
+  (update-atom)
+  (views/index))
+
+(POST &quot;/api/links&quot; request
+  (let [next-id (inc (apply max (map #(:id %) @links)))
+        new-link (:body request)
+        new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-15&quot;)]
+    (async-request-title new-link-with-fields)
+    (swap! links conj new-link-with-fields)
+    (json/write-str @links)))
+</code></pre>
+
+<p>When I load the view, I call the 2 background functions, so that <code>go</code> blocks are set up. The <code>go</code> blocks are where putting and taking from channels are executed. These functions will wait for new input to come in, but since I am not interested in the return value, calling them returns immediately.</p>
+
+<p>The code that creates a link is changed, as well. Firstly, the synchronous fetch is reverted back to what I had initially, where <code>title</code> is the URL. Then, just before adding the new link, a request is submitted for the title attribute of the URL. This kicks off the asynchronous pipeline.</p>
+
+<h2 id="incoming-gif">Incoming GIF!</h2>
+
+<p>This is how this looks now.</p>
+
+<p><img src="/images/core-async-magic.gif" alt="core async magic" /></p>
+
+<p>The speed of update is back, since we&rsquo;re just pre-pending a record to an in-memory data structure. After a reload (or 2), the title is changed, demonstrating the background work.</p>
+
+<p>That&rsquo;s about it for now. Until the next post.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

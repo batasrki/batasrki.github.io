@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 5</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 5" />
+<meta property="og:description" content="Previously in Experiments, part 4,&hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&rsquo;s installment&hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&rsquo;ll have to commit to a database, but I can push that off for at least one more post." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-12-19-experiments-part-5/" />
+<meta property="article:published_time" content="2015-12-19T18:34:43-05:00"/>
+<meta property="article:modified_time" content="2015-12-19T18:34:43-05:00"/>
+
+<meta itemprop="name" content="Experiments part 5">
+<meta itemprop="description" content="Previously in Experiments, part 4,&hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&rsquo;s installment&hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&rsquo;ll have to commit to a database, but I can push that off for at least one more post.">
+
+
+<meta itemprop="datePublished" content="2015-12-19T18:34:43-05:00" />
+<meta itemprop="dateModified" content="2015-12-19T18:34:43-05:00" />
+<meta itemprop="wordCount" content="542">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 5"/>
+<meta name="twitter:description" content="Previously in Experiments, part 4,&hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&rsquo;s installment&hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&rsquo;ll have to commit to a database, but I can push that off for at least one more post."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 5</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-12-19T18:34:43-05:00">December 19, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-4-https-batasrki-github-io-blog-2015-12-15-experiments-part-4">Previously in <a href="https://batasrki.github.io/blog/2015/12/15/experiments-part-4">Experiments, part 4</a>,&hellip;</h2>
+
+<p>I added a form for creating new links. Instead of introducing a database, the links are being added to an <code>atom</code>.</p>
+
+<h2 id="in-tonight-s-installment">In tonight&rsquo;s installment&hellip;</h2>
+
+<p>I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&rsquo;ll have to commit to a database, but I can push that off for at least one more post. I would like to have a background queue-like functionality without introducing an actual background queue, and I think <a href="https://clojure.github.io/core.async/">core.async</a> can help me do that</p>
+
+<h2 id="onward-then">Onward, then&hellip;</h2>
+
+<p>What I would like to do first is fetch the title of the posted URL. This will enable me to have a nice description of the link I saved. I need a library to which I can give a URL and have it fetch the HTML of the page. It would be nice if it could also parse that HTML. The most popular library in Clojure that does this is called <a href="https://github.com/cgrand/enlive">Enlive</a>.</p>
+
+<p>As usual, I&rsquo;m going to add the library to the <code>project.clj</code> file and require it in the <code>handler.clj</code>.</p>
+
+<pre><code class="language-clojure">;; in project.clj, in the :dependencies vector
+[enlive &quot;1.1.5&quot;]
+
+;; in handler.clj
+(:require [net.cgrand.enlive-html :as html])
+</code></pre>
+
+<p>With that done, I need to add a few methods to fetch and parse HTML.</p>
+
+<pre><code class="language-clojure">(defn fetch-url [url]
+  (with-open [inputstream (-&gt; (java.net.URL. url)
+                              .openConnection
+                              (doto (.setRequestProperty &quot;User-Agent&quot;
+                                                         &quot;ReadLaterCrawler/1.0 ...&quot;))
+                              .getContent)]
+    (html/html-resource inputstream)))
+</code></pre>
+
+<p>This is the first function where Clojure&rsquo;s interop with Java starts to show. Using the Java&rsquo;s URL library to get open the connection, the code threads that connection through a few things ending with the <code>getContent</code> function. Enlive then turns that resource into a map that I can iterate over. A quick REPL test shows me how this looks.</p>
+
+<p><img src="/images/enlive-repl.png" alt="enlive repl" /></p>
+
+<p>OK, I have a map representing the HTML, I need to get at the title.</p>
+
+<pre><code class="language-clojure">(defn get-title [url]
+  (first (map html/text (html/select (fetch-url url) [:title]))))
+</code></pre>
+
+<p>Enlive lets me select the element based on a vector I pass in. Since I all I want is a title, it&rsquo;s a simple vector being passed in. <code>html/select</code> takes the map of HTML and the selector vector and gives me back a map representing the selected thing.</p>
+
+<p><img src="/images/enlive-repl-2.png" alt="enlive repl 2" /></p>
+
+<p>I then extract the content and make it the return value.</p>
+
+<p><img src="/images/enlive-repl-3.png" alt="enlive repl 3" /></p>
+
+<h3 id="integration">Integration</h3>
+
+<p>Now that I have that working, I am going to do a simple integration into the current flow. POSTing the new link will block until the title is extracted, which is what <code>core.async</code> will solve.</p>
+
+<pre><code class="language-clojure">;; in POST
+(POST &quot;/api/links&quot; request
+  (let [next-id (inc (apply max (map #(:id %) @links)))
+        new-link (:body request)
+        new-link-with-fields (assoc new-link :id next-id :title (get-title (:url new-link)) :created_at &quot;2015-12-15&quot;)]
+    (swap! links conj new-link-with-fields)
+    (json/write-str @links)))
+</code></pre>
+
+<p>The change I made is in <code>assoc</code>, where instead of <code>:title (:url new-link)</code>, I now have <code>:title (get-title (:url new-link))</code>. This should block while getting the title.</p>
+
+<p><img src="/images/sync-save.gif" alt="sync save" /></p>
+
+<p>The time it takes for the new link to show up varies based on the response time of the website, so while it can be quick some of the time, other times it might take a while.</p>
+
+<p>That&rsquo;s it for now. In the next post, I am going to make that fetching asynchronous, which may take a bit of rejiggering of things.</p>
+
+<p>Until then.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

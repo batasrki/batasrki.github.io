@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Game of Life in Elixir and OTP</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Game of Life in Elixir and OTP" />
+<meta property="og:description" content="I&rsquo;m back! During my time away from the blog, I&rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The latest one is the inspiration for this blog post.
+The course wants me to use Scala and Kompics (course facilitators&rsquo; distributed framework thing). I really don&rsquo;t have an interest in Scala, and I&rsquo;m auditing the course so I can&rsquo;t submit work anyway. I thought it&rsquo;d be interesting to use Elixir and OTP to solve the problems." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2017-11-14-game-of-life-in-elixir-and-otp/" />
+<meta property="article:published_time" content="2017-11-14T23:51:27-05:00"/>
+<meta property="article:modified_time" content="2017-11-14T23:51:27-05:00"/>
+
+<meta itemprop="name" content="Game of Life in Elixir and OTP">
+<meta itemprop="description" content="I&rsquo;m back! During my time away from the blog, I&rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The latest one is the inspiration for this blog post.
+The course wants me to use Scala and Kompics (course facilitators&rsquo; distributed framework thing). I really don&rsquo;t have an interest in Scala, and I&rsquo;m auditing the course so I can&rsquo;t submit work anyway. I thought it&rsquo;d be interesting to use Elixir and OTP to solve the problems.">
+
+
+<meta itemprop="datePublished" content="2017-11-14T23:51:27-05:00" />
+<meta itemprop="dateModified" content="2017-11-14T23:51:27-05:00" />
+<meta itemprop="wordCount" content="771">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Game of Life in Elixir and OTP"/>
+<meta name="twitter:description" content="I&rsquo;m back! During my time away from the blog, I&rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The latest one is the inspiration for this blog post.
+The course wants me to use Scala and Kompics (course facilitators&rsquo; distributed framework thing). I really don&rsquo;t have an interest in Scala, and I&rsquo;m auditing the course so I can&rsquo;t submit work anyway. I thought it&rsquo;d be interesting to use Elixir and OTP to solve the problems."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Game of Life in Elixir and OTP</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2017-11-14T23:51:27-05:00">November 14, 2017</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>I&rsquo;m back! During my time away from the blog, I&rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The <a href="https://courses.edx.org/courses/course-v1:KTHx+ID2203.1x+3T_2017/course/">latest one</a> is the inspiration for this blog post.</p>
+
+<p>The course wants me to use Scala and Kompics (course facilitators&rsquo; distributed framework thing). I really don&rsquo;t have an interest in Scala, and I&rsquo;m auditing the course so I can&rsquo;t submit work anyway. I thought it&rsquo;d be interesting to use Elixir and OTP to solve the problems.</p>
+
+<h2 id="game-of-life">Game of Life</h2>
+
+<p>I have never had a satisfactory solution to this programming challenge, nor did I have a motivation to come up with one. Writing about it, though, may provide that motivation.</p>
+
+<p>The rules are simple. Each cell in a grid has up to 8 neighbours. Each cell&rsquo;s state is determined using the following:</p>
+
+<ol>
+<li>Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.</li>
+<li>Any live cell with two or three live neighbours lives on to the next generation.</li>
+<li>Any live cell with more than three live neighbours dies, as if by overpopulation.</li>
+<li>Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.</li>
+</ol>
+
+<p>The idea is to seed the entire grid (heretofore known as <em>world</em>) with an initial state, set up a transition cycle (say every 10 seconds) and let the world evolve from this initial state. Each subsequent generation is a pure function of the previous generation&rsquo;s state through the application of rules.</p>
+
+<p><img src="/images/sounds_like_a_job_for_a_functional_language.jpg" alt="Functional Superman" /></p>
+
+<p>This sounds like an appropriate use case for a functional language like Elixir.</p>
+
+<h2 id="the-plan">The plan</h2>
+
+<p>Firstly, I will implement a naive version of this program. Cell state will be managed manually and generation of new state of the world will be triggered manually.</p>
+
+<p>Then, I&rsquo;ll explore OTP and how it can help with parts of the implementation. For example, I&rsquo;ve heard of <code>gen_fsm</code>, the state machine OTP behaviour. It sounds like it could help with state transitions. Furthermore, I will want to explore how to parallelize the generation of the new state. Each cell acts on the information available to it at the time of transition <em>and only on that information</em>. That sounds to me like an <a href="https://en.wikipedia.org/wiki/Embarrassingly_parallel">embarrassingly parallel</a> problem.</p>
+
+<h2 id="naive-implementation">Naive implementation</h2>
+
+<p>Let&rsquo;s start from the bottom, with a module that defines a single cell.</p>
+
+<pre><code>defmodule GameOfLife.Cell do
+  alias __MODULE__
+
+  @states [:alive, :dead]
+  defstruct [:state]
+
+  def new() do
+    %Cell{state: Enum.random(@states)}
+  end
+
+  def toggle(%Cell{state: :alive}) do
+    %Cell{state: :dead}
+  end
+
+  def toggle(%Cell{state: :dead}) do
+    %Cell{state: :alive}
+  end
+
+end
+</code></pre>
+
+<p>A Cell can have 2 states, <code>alive</code> and <code>dead</code>. When a new Cell is generated, its state is randomly picked from one of the two defined. This allows the progam to have a randomized initial state of the world.</p>
+
+<p>As is Erlang and Elixir custom, there&rsquo;s a single method provided, with an overloaded definition. Which definition runs depends on the pattern matching on the Cell&rsquo;s state when it&rsquo;s passed in. The <code>toggle</code> method then returns a new Cell with its state set.</p>
+
+<p>This allows me to set up a board. The board is just a two-dimensional array of <code>Cell</code>s.</p>
+
+<pre><code>defmodule GameOfLife.World do
+  alias __MODULE__
+
+  defstruct [:board]
+
+  def new() do
+    # generate a 10x10 matrix of initial state cells
+    %World{board: Enum.map(Range.new(0,10), fn(x) -&gt; Enum.map(Range.new(0,10), fn(x) -&gt; GameOfLife.Cell.new end) end)}
+  end
+end
+
+</code></pre>
+
+<p>Since the <code>Cell</code> initializer picks a state at random, the easy thing to do is to loop over the range and add a cell to the board.</p>
+
+<p>I&rsquo;ll also add a display module so that I can see the progression of the board state over time.</p>
+
+<pre><code>defmodule GameOfLife.Display do
+  alias GameOfLife.{Cell, World}
+
+  def print(%Cell{} = cell) do
+    case cell.state do
+      :alive -&gt;
+        &quot;X&quot;
+      :dead -&gt;
+        &quot; &quot;
+    end
+  end
+
+  def print(%World{} = world) do
+    IO.puts print_board(world.board)
+  end
+
+  defp print_row(row) do
+    Enum.join(
+      Enum.map(row, fn(cell) -&gt; print(cell) end),
+      &quot;&quot;
+    )
+  end
+
+  defp print_board(board) do
+    Enum.join(
+      Enum.map(board, fn(row) -&gt; print_row(row) end),
+      &quot;\n&quot;
+    )
+  end
+end
+
+</code></pre>
+
+<p>For each row and each cell in the row, the code inspects the cell&rsquo;s state and emits either an &ldquo;X&rdquo; or &ldquo; &rdquo; (single whitespace). It then joins each cell in a row to the rest of it and joins rows with a new line, visually creating a board.</p>
+
+<p>Here&rsquo;s how it looks like,</p>
+
+<pre><code>iex(34)&gt; Display.print(World.new)
+    X XXXX
+X     XX  X
+XXX  X X
+XX   X  X
+ X XXXX XXX
+XXX X  X  X
+    X X  X
+  XX XX X X
+XXXX X    X
+ XXX X XXX
+   XX    X
+:ok
+</code></pre>
+
+<p>Cool! Running this code more than once gives me different initial board configurations. Now that the basics are set up, the next post will cover handling the logic to determine the state of the cell based on its neighbours.</p>
+
+<p>Toodles.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

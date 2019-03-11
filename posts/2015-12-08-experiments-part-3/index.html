@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Experiments part 3</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Experiments part 3" />
+<meta property="og:description" content="Previously in Experiments, part 2,&hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
+In tonight&rsquo;s installment&hellip; It&rsquo;s all about the UI. I&rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
+Onward, then&hellip; Firstly, I&rsquo;m going to add 3 more links to my dataset so that I can play with the layout." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/2015-12-08-experiments-part-3/" />
+<meta property="article:published_time" content="2015-12-08T00:42:50-05:00"/>
+<meta property="article:modified_time" content="2015-12-08T00:42:50-05:00"/>
+
+<meta itemprop="name" content="Experiments part 3">
+<meta itemprop="description" content="Previously in Experiments, part 2,&hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
+In tonight&rsquo;s installment&hellip; It&rsquo;s all about the UI. I&rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
+Onward, then&hellip; Firstly, I&rsquo;m going to add 3 more links to my dataset so that I can play with the layout.">
+
+
+<meta itemprop="datePublished" content="2015-12-08T00:42:50-05:00" />
+<meta itemprop="dateModified" content="2015-12-08T00:42:50-05:00" />
+<meta itemprop="wordCount" content="549">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Experiments part 3"/>
+<meta name="twitter:description" content="Previously in Experiments, part 2,&hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
+In tonight&rsquo;s installment&hellip; It&rsquo;s all about the UI. I&rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
+Onward, then&hellip; Firstly, I&rsquo;m going to add 3 more links to my dataset so that I can play with the layout."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="http://example.org/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Experiments part 3</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2015-12-08T00:42:50-05:00">December 8, 2015</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<h2 id="previously-in-experiments-part-2-https-batasrki-github-io-blog-2015-12-01-experiments-part-2">Previously in <a href="https://batasrki.github.io/blog/2015/12/01/experiments-part-2">Experiments, part 2</a>,&hellip;</h2>
+
+<p>I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.</p>
+
+<h2 id="in-tonight-s-installment">In tonight&rsquo;s installment&hellip;</h2>
+
+<p>It&rsquo;s all about the UI. I&rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.</p>
+
+<h2 id="onward-then">Onward, then&hellip;</h2>
+
+<p>Firstly, I&rsquo;m going to add 3 more links to my dataset so that I can play with the layout.</p>
+
+<pre><code class="language-clojure">(def links
+  (atom '({:id 1 :url &quot;https://google.ca&quot; :title &quot;Google&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
+          {:id 2 :url &quot;https://twitter.com&quot; :title &quot;Twitter&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
+          {:id 3 :url &quot;https://github.com&quot; :title &quot;Github&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
+          {:id 4 :url &quot;https://www.shopify.ca&quot; :title &quot;Shopify&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
+          {:id 5 :url &quot;https://www.youtube.com&quot; :title &quot;YouTube&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;})
+  )
+)
+
+(defroutes app-routes
+  (GET &quot;/&quot; []
+       (views/index))
+  (GET &quot;/api/links&quot; []
+       (json/write-str @links))
+  (route/not-found &quot;Not Found&quot;))
+</code></pre>
+
+<p>I&rsquo;m extracting the static set into an <a href="http://clojure.org/atoms">atom</a>, and then de-referencing it to grab its value inside the JSON render call. I can easily add more to this set if I need to play with bigger sets while I lay things out.</p>
+
+<p>Now, I&rsquo;m ready to switch the table UI to a card one.</p>
+
+<h2 id="card-ui">Card UI</h2>
+
+<p>To do that, I&rsquo;m going to need to add a component. I&rsquo;d like to have a group of 4 cards per row, so I need partition my set into groups of 4 and I need a <code>LinkGroup</code> component to manage each partition.</p>
+
+<pre><code class="language-javascript">var LinkGroup = React.createClass({
+  render: function() {
+    var linkNodes = this.props.data.map(function (link) {
+      return (&lt;Link key={link.id} title={link.title} url={link.url} client={link.client} created_at={link.created_at} /&gt;);
+    });
+
+    return (
+      &lt;section className={&quot;card-columns&quot;}&gt;
+        {linkNodes}
+      &lt;/section&gt;
+    );
+  }
+});
+
+var LinkList = React.createClass({
+  render: function() {
+    var grouped = this.partition(this.props.data, 4);
+
+    var linkGroups = grouped.map(function (link_group) {
+      return(&lt;LinkGroup data={link_group} /&gt;);
+    });
+
+    return (
+      &lt;section&gt;
+        {linkGroups}
+      &lt;/section&gt;
+    );
+  },
+  partition: function(list, in_groups_of) {
+    var container = [];
+    var sublist = [];
+    var initial = 0;
+    var iteration_count = Math.ceil(list.length / in_groups_of);
+
+    for(var k = 1; k &lt;= iteration_count; k++) {
+      for(var i = initial; i &lt; (in_groups_of * k); i++) {
+            if(list[i] !== undefined) {
+            sublist.push(list[i]);
+            }
+      }
+      container.push(sublist);
+      sublist = [];
+      initial = in_groups_of * k;
+    }
+    return container;
+  }
+});
+</code></pre>
+
+<p>Let me explain the changes. The <code>LinkList</code> component is now rendering a set of <code>LinkGroup</code> components. Each <code>LinkGroup</code> component is rendering its own subset of <code>Link</code> components. I chose, for now, to do the partitioning of the data in Javascript. It was a fun diversion, though I may decide to push that onto the server at a later point.</p>
+
+<p>I&rsquo;ve also added a class for card columns that will be leveraged below. Now, I need to modify my <code>Link</code> component to suit the new layout.</p>
+
+<pre><code class="language-javascript">var Link = React.createClass({
+  render: function() {
+    return (
+      &lt;div className={&quot;card card-block&quot;}&gt;
+        &lt;h4 className=&quot;card-title&quot;&gt;
+          &lt;a target=&quot;_blank&quot; href={this.props.url}&gt;{this.props.title}&lt;/a&gt;
+        &lt;/h4&gt;
+        &lt;p className=&quot;card-text&quot;&gt;
+          Created by {this.props.client} at {this.props.created_at}
+        &lt;/p&gt;
+      &lt;/div&gt;
+    );
+  }
+});
+</code></pre>
+
+<p>The changes include ripping out <code>&lt;tr&gt;</code> and <code>&lt;td&gt;</code> elements and replacing them with <code>&lt;div&gt;</code>s and headers and paragraphs. I like this change, because I plan on adding another aspect of each link, namely a bit of text parsed out from it. I feel this layout suits that plan better.</p>
+
+<p>Refreshing the page, I see the new layout and with that, I&rsquo;m done. Next up is database work.</p>
+
+<p>Until then.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

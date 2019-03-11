@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Clojure Reactjs on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/clojure-reactjs/</link>
+    <description>Recent content in Clojure Reactjs on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 10 Apr 2016 21:23:15 -0400</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/clojure-reactjs/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Deletion on server-side</title>
+      <link>http://example.org/posts/2016-04-10-deletion-on-server-side/</link>
+      <pubDate>Sun, 10 Apr 2016 21:23:15 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-04-10-deletion-on-server-side/</guid>
+      <description>Previously, I wrote about how to delete a link from the list of links client-side in the new ReactJS version of my bookmarking app. Tonight, I will finish off that feature by enabling the deletion on the server.
+First, a confession It took me nearly a month to write the follow-up post for a few reasons, but the chief problem was this piece of code:
+(defn destroy-link [request] (let [id (get-in request [:path-params :id])] (reset!</description>
+    </item>
+    
+    <item>
+      <title>Deletion using ReactJS</title>
+      <link>http://example.org/posts/2016-03-14-deletion-using-reactjs/</link>
+      <pubDate>Mon, 14 Mar 2016 00:01:34 -0400</pubDate>
+      
+      <guid>http://example.org/posts/2016-03-14-deletion-using-reactjs/</guid>
+      <description>Tonight, I will start on enabling deletion of links in my ReactJS single-page app. It should be straightforward, but with new tech, you just never know.
+Client-side first On the client-side, I need add a small form that will submit the DELETE request to the server using the given ID. The most logical place for the markup is on the component, but I suspect that I&amp;rsquo;ll need to pass the event up to the root component in order to keep the one-way data flow and easy re-rendering.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 2</title>
+      <link>http://example.org/posts/2015-12-01-experiments-part-2/</link>
+      <pubDate>Tue, 01 Dec 2015 20:25:32 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-01-experiments-part-2/</guid>
+      <description>Previously in Experiments,&amp;hellip; I set up a Clojure backend and installed ReactJS front-end. I also created a basic skeleton, but that didn&amp;rsquo;t actually show up, because JSX.
+In tonight&amp;rsquo;s installment&amp;hellip; Firstly, I&amp;rsquo;m going to fix up the transpiling from JSX to JS, so that changes to the React front-end are picked up and shown. I&amp;rsquo;ll add the expected route, but serve dummy data. Then, I&amp;rsquo;ll get the front-end to consume that data.</description>
+    </item>
+    
+  </channel>
+</rss>

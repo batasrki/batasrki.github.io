@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Reactjs Clojure Core.async on (Insightful) Ramblings</title>
+    <link>http://example.org/categories/reactjs-clojure-core.async/</link>
+    <description>Recent content in Reactjs Clojure Core.async on (Insightful) Ramblings</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 21 Dec 2015 21:52:24 -0500</lastBuildDate>
+    
+	<atom:link href="http://example.org/categories/reactjs-clojure-core.async/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Experiments part 7</title>
+      <link>http://example.org/posts/2015-12-21-experiments-part-7/</link>
+      <pubDate>Mon, 21 Dec 2015 21:52:24 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-21-experiments-part-7/</guid>
+      <description>Previously in Experiments, part 6,&amp;hellip; I used core.async to background a slow task, namely fetching the HTML of the saved URL and parsing out the &amp;lt;title&amp;gt; tag.
+Up next&amp;hellip; I need to do a bit of yak-shaving. As I alluded to before, I want to use Server-sent Events, to send the above background update to the client on completion. To do that, I have to switch libraries. Up to now, I&amp;rsquo;ve used Compojure, but after reading up on SSE and Clojure, I have been convinced that I need to use either Pedestal or yada.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 6</title>
+      <link>http://example.org/posts/2015-12-19-experiments-part-6/</link>
+      <pubDate>Sat, 19 Dec 2015 20:23:01 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-19-experiments-part-6/</guid>
+      <description>Previously in Experiments, part 5,&amp;hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
+Let&amp;rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
+;; in project.clj [org.clojure/core.async &amp;quot;0.2.374&amp;quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&amp;gt;! &amp;lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.</description>
+    </item>
+    
+    <item>
+      <title>Experiments part 5</title>
+      <link>http://example.org/posts/2015-12-19-experiments-part-5/</link>
+      <pubDate>Sat, 19 Dec 2015 18:34:43 -0500</pubDate>
+      
+      <guid>http://example.org/posts/2015-12-19-experiments-part-5/</guid>
+      <description>Previously in Experiments, part 4,&amp;hellip; I added a form for creating new links. Instead of introducing a database, the links are being added to an atom.
+In tonight&amp;rsquo;s installment&amp;hellip; I am going to start working the trickier parts of bookmarking links, retrieving a title of a link and possibly the body. At some point, I&amp;rsquo;ll have to commit to a database, but I can push that off for at least one more post.</description>
+    </item>
+    
+  </channel>
+</rss>
