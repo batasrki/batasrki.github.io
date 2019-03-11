@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Concurrency Elixir Otp on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/concurrency-elixir-otp/</link>
+    <link>https://batasrki.github.io/categories/concurrency-elixir-otp/</link>
     <description>Recent content in Concurrency Elixir Otp on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 14 Nov 2017 23:51:27 -0500</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/concurrency-elixir-otp/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/concurrency-elixir-otp/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Game of Life in Elixir and OTP</title>
-      <link>http://example.org/posts/2017-11-14-game-of-life-in-elixir-and-otp/</link>
+      <link>https://batasrki.github.io/posts/2017-11-14-game-of-life-in-elixir-and-otp/</link>
       <pubDate>Tue, 14 Nov 2017 23:51:27 -0500</pubDate>
       
-      <guid>http://example.org/posts/2017-11-14-game-of-life-in-elixir-and-otp/</guid>
+      <guid>https://batasrki.github.io/posts/2017-11-14-game-of-life-in-elixir-and-otp/</guid>
       <description>I&amp;rsquo;m back! During my time away from the blog, I&amp;rsquo;ve been working hard and (half-)taking various Coursera and EdX courses. The latest one is the inspiration for this blog post.
 The course wants me to use Scala and Kompics (course facilitators&amp;rsquo; distributed framework thing). I really don&amp;rsquo;t have an interest in Scala, and I&amp;rsquo;m auditing the course so I can&amp;rsquo;t submit work anyway. I thought it&amp;rsquo;d be interesting to use Elixir and OTP to solve the problems.</description>
     </item>

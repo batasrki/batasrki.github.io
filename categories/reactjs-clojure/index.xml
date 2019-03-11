@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Reactjs Clojure on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/reactjs-clojure/</link>
+    <link>https://batasrki.github.io/categories/reactjs-clojure/</link>
     <description>Recent content in Reactjs Clojure on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 15 Dec 2015 22:02:56 -0500</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/reactjs-clojure/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/reactjs-clojure/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Experiments part 4</title>
-      <link>http://example.org/posts/2015-12-15-experiments-part-4/</link>
+      <link>https://batasrki.github.io/posts/2015-12-15-experiments-part-4/</link>
       <pubDate>Tue, 15 Dec 2015 22:02:56 -0500</pubDate>
       
-      <guid>http://example.org/posts/2015-12-15-experiments-part-4/</guid>
+      <guid>https://batasrki.github.io/posts/2015-12-15-experiments-part-4/</guid>
       <description>Previously in Experiments, part 3,&amp;hellip; I set up a card-based UI and added a few more records to my test data set.
 In tonight&amp;rsquo;s installment&amp;hellip; It&amp;rsquo;s still (mostly) about the UI. I&amp;rsquo;m going to create a form for adding new links. I will be appending the links to the test data set and push dealing with the DB until later.
 Onward, then&amp;hellip; Up to now, this has been a read-only app.</description>
@@ -24,10 +24,10 @@ Onward, then&amp;hellip; Up to now, this has been a read-only app.</description>
     
     <item>
       <title>Experiments part 3</title>
-      <link>http://example.org/posts/2015-12-08-experiments-part-3/</link>
+      <link>https://batasrki.github.io/posts/2015-12-08-experiments-part-3/</link>
       <pubDate>Tue, 08 Dec 2015 00:42:50 -0500</pubDate>
       
-      <guid>http://example.org/posts/2015-12-08-experiments-part-3/</guid>
+      <guid>https://batasrki.github.io/posts/2015-12-08-experiments-part-3/</guid>
       <description>Previously in Experiments, part 2,&amp;hellip; I set up dummy data on the backend, then created the initial set of components on the front end that consume that data.
 In tonight&amp;rsquo;s installment&amp;hellip; It&amp;rsquo;s all about the UI. I&amp;rsquo;m going to add a few more links to the dummy set, then set up my card-based UI.
 Onward, then&amp;hellip; Firstly, I&amp;rsquo;m going to add 3 more links to my dataset so that I can play with the layout.</description>
@@ -35,10 +35,10 @@ Onward, then&amp;hellip; Firstly, I&amp;rsquo;m going to add 3 more links to my 
     
     <item>
       <title>Experiments, part 1</title>
-      <link>http://example.org/posts/2015-11-27-experiments/</link>
+      <link>https://batasrki.github.io/posts/2015-11-27-experiments/</link>
       <pubDate>Fri, 27 Nov 2015 19:50:25 -0500</pubDate>
       
-      <guid>http://example.org/posts/2015-11-27-experiments/</guid>
+      <guid>https://batasrki.github.io/posts/2015-11-27-experiments/</guid>
       <description>A different tack I&amp;rsquo;ve been very lucky to have had steady employment using Ruby and Rails. At times, it felt like cheating. How can I have so much fun and get paid well for it?
 Continuing my search for that fun high, I started looking at other technologies. I&amp;rsquo;ve been an admirer of Clojure for a while. Its approach to composing programs seems to suit how I think software development should be.</description>
     </item>

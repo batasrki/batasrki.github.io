@@ -2,41 +2,41 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Algorithms on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/algorithms/</link>
+    <link>https://batasrki.github.io/categories/algorithms/</link>
     <description>Recent content in Algorithms on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 05 Jul 2016 21:48:39 -0400</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/algorithms/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/algorithms/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Implementing a queue using an array</title>
-      <link>http://example.org/posts/2016-07-05-implementing-a-queue-using-an-array/</link>
+      <link>https://batasrki.github.io/posts/2016-07-05-implementing-a-queue-using-an-array/</link>
       <pubDate>Tue, 05 Jul 2016 21:48:39 -0400</pubDate>
       
-      <guid>http://example.org/posts/2016-07-05-implementing-a-queue-using-an-array/</guid>
+      <guid>https://batasrki.github.io/posts/2016-07-05-implementing-a-queue-using-an-array/</guid>
       <description>Up tonight, I&amp;rsquo;m going to write a queue implementation using a vector in Clojure and a fixed-size array in Go. The reason for the latter is that the Data Structures course on Coursera shows an interesting way of making a queue work when the backing data structure is of fixed size.
 Essentially, what I will do is implement a circular buffer. As items are popped off the front of the queue to be worked on, I&amp;rsquo;ll have two pointers that will wrap around to the beginning of the array as needed.</description>
     </item>
     
     <item>
       <title>Stacks and queues part 2</title>
-      <link>http://example.org/posts/2016-06-26-stacks-and-queues-part-2/</link>
+      <link>https://batasrki.github.io/posts/2016-06-26-stacks-and-queues-part-2/</link>
       <pubDate>Sun, 26 Jun 2016 21:31:26 -0400</pubDate>
       
-      <guid>http://example.org/posts/2016-06-26-stacks-and-queues-part-2/</guid>
+      <guid>https://batasrki.github.io/posts/2016-06-26-stacks-and-queues-part-2/</guid>
       <description>Following on from the last post, tonight I am going to try and implement the stack using a linked list instead of an array.
 Short background As explained in the course, a linked list might be preferred over an array, because in languages like C, an array has to be of fixed size. Adding a one more element to a full stack will cause an overflow error at best and overwrite random memory addresses at worst.</description>
     </item>
     
     <item>
       <title>Stacks and queues, part 1</title>
-      <link>http://example.org/posts/2016-06-23-stacks-and-queues/</link>
+      <link>https://batasrki.github.io/posts/2016-06-23-stacks-and-queues/</link>
       <pubDate>Thu, 23 Jun 2016 20:11:26 -0400</pubDate>
       
-      <guid>http://example.org/posts/2016-06-23-stacks-and-queues/</guid>
+      <guid>https://batasrki.github.io/posts/2016-06-23-stacks-and-queues/</guid>
       <description>I&amp;rsquo;m auditing the Data Structures course on Coursera. Auditing means I&amp;rsquo;m taking it for free and not paying them like they want me to. This also means I can&amp;rsquo;t submit solutions to quizzes. Instead, I will try to write things up here as I learn them.
 First up, I&amp;rsquo;d like to attempt to implement a stack in Clojure and Ruby using an array as the base data structure.
 Stack using an list in Clojure and an array in Ruby A stack is known as a Last In, First Out data structure.</description>

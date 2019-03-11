@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Fast Rails Rspec Tests on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/fast-rails-rspec-tests/</link>
+    <link>https://batasrki.github.io/categories/fast-rails-rspec-tests/</link>
     <description>Recent content in Fast Rails Rspec Tests on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 07 Dec 2011 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/fast-rails-rspec-tests/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/fast-rails-rspec-tests/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>No Rails in my specs</title>
-      <link>http://example.org/posts/2013-05-17-no-rails-in-my-specs/</link>
+      <link>https://batasrki.github.io/posts/2013-05-17-no-rails-in-my-specs/</link>
       <pubDate>Wed, 07 Dec 2011 00:00:00 +0000</pubDate>
       
-      <guid>http://example.org/posts/2013-05-17-no-rails-in-my-specs/</guid>
+      <guid>https://batasrki.github.io/posts/2013-05-17-no-rails-in-my-specs/</guid>
       <description>tl; dr Removing Rails from the runtime of an RSpec suite will result in massive performance improvements while reducing the number of steps needed to run them. The trade-offs are:
 A different way of writing specs, especially controller ones There is overhead due to having to handle requires on your own These trade-offs may not be worth the performance gain. Skim the code blocks if the post is too long.</description>
     </item>

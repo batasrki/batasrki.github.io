@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Reactjs Clojure Core.async Sse on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/reactjs-clojure-core.async-sse/</link>
+    <link>https://batasrki.github.io/categories/reactjs-clojure-core.async-sse/</link>
     <description>Recent content in Reactjs Clojure Core.async Sse on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 09 Jan 2016 23:20:30 -0500</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/reactjs-clojure-core.async-sse/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/reactjs-clojure-core.async-sse/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Experiments part 8</title>
-      <link>http://example.org/posts/2016-01-09-experiments-part-8/</link>
+      <link>https://batasrki.github.io/posts/2016-01-09-experiments-part-8/</link>
       <pubDate>Sat, 09 Jan 2016 23:20:30 -0500</pubDate>
       
-      <guid>http://example.org/posts/2016-01-09-experiments-part-8/</guid>
+      <guid>https://batasrki.github.io/posts/2016-01-09-experiments-part-8/</guid>
       <description>Previously in Experiments, part 7,&amp;hellip; I switched from Compojure to Pedestal in order to take advantage of its support for Server-sent Events. I want to use that to send background updates to the client on completion of a task.
 This took a while I expected this feature to be done very quickly. Up to now, every library I had to integrate into my app did so nearly seamlessly. It was a matter of reading the appropriate section of the library&amp;rsquo;s documentation, doing a few REPL experiments, integrating the code and doing manual testing.</description>
     </item>

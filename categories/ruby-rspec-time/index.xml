@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Ruby Rspec Time on (Insightful) Ramblings</title>
-    <link>http://example.org/categories/ruby-rspec-time/</link>
+    <link>https://batasrki.github.io/categories/ruby-rspec-time/</link>
     <description>Recent content in Ruby Rspec Time on (Insightful) Ramblings</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 29 Jan 2015 20:30:29 -0500</lastBuildDate>
     
-	<atom:link href="http://example.org/categories/ruby-rspec-time/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://batasrki.github.io/categories/ruby-rspec-time/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>RSpec matcher and time value</title>
-      <link>http://example.org/posts/2015-01-29-rspec-matcher-and-time-value/</link>
+      <link>https://batasrki.github.io/posts/2015-01-29-rspec-matcher-and-time-value/</link>
       <pubDate>Thu, 29 Jan 2015 20:30:29 -0500</pubDate>
       
-      <guid>http://example.org/posts/2015-01-29-rspec-matcher-and-time-value/</guid>
+      <guid>https://batasrki.github.io/posts/2015-01-29-rspec-matcher-and-time-value/</guid>
       <description>This will be a quick post that documents an interesting find in RSpec.
 Background I encountered a classic Ruby testing failure. I have an object whose method takes 2 time values, a start datetime and an end datetime. The intent of the method is to find records matching those values and send an e-mail to a related User account.
 As many experienced Ruby programmers have seen, the failure looks like this:</description>
