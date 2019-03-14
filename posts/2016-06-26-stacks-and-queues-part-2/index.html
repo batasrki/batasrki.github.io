@@ -121,72 +121,66 @@ Short background As explained in the course, a linked list might be preferred ov
 <h2 id="ruby-implementation-first">Ruby implementation first</h2>
 
 <p>Ruby is a language I have far more experience in, so I&rsquo;m going to start there. I&rsquo;m going to reuse the <code>Stack</code> interface from the last post.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Stack</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">push</span>(item, store)
+    store<span style="color:#f92672">.</span>write(item)
+  <span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">class Stack
-  def self.push(item, store)
-    store.write(item)
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">top</span>(store)
+    store<span style="color:#f92672">.</span>read
+  <span style="color:#66d9ef">end</span>
 
-  def self.top(store)
-    store.read
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">pop</span>(store)
+    store<span style="color:#f92672">.</span>read(<span style="color:#e6db74">remove</span>: <span style="color:#66d9ef">true</span>)
+  <span style="color:#66d9ef">end</span>
 
-  def self.pop(store)
-    store.read(remove: true)
-  end
-
-  def self.empty?(store)
-    store.empty?
-  end
-end
-</code></pre>
-
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">empty?</span>(store)
+    store<span style="color:#f92672">.</span>empty?
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>I&rsquo;m going to supplant the <code>store</code> parameter with a linked list implementation. The linked list needs to have two things, a place to store the value and a pointer to the next item in the list.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LinkedListStackContainer</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>
+    @head <span style="color:#f92672">=</span> <span style="color:#66d9ef">nil</span>
+  <span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">class LinkedListStackContainer
-  def initialize
-    @head = nil
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">write</span>(item)
+    node <span style="color:#f92672">=</span> <span style="color:#66d9ef">Node</span><span style="color:#f92672">.</span>new(item, head)
+    @head <span style="color:#f92672">=</span> node
+  <span style="color:#66d9ef">end</span>
 
-  def write(item)
-    node = Node.new(item, head)
-    @head = node
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">read</span>(<span style="color:#e6db74">remove</span>: <span style="color:#66d9ef">false</span>)
+    <span style="color:#66d9ef">if</span> remove
+      first_node <span style="color:#f92672">=</span> @head
+      @head <span style="color:#f92672">=</span> @head<span style="color:#f92672">.</span>next
+      first_node<span style="color:#f92672">.</span>value
+    <span style="color:#66d9ef">else</span>
+      @head<span style="color:#f92672">.</span>value
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
 
-  def read(remove: false)
-    if remove
-      first_node = @head
-      @head = @head.next
-      first_node.value
-    else
-      @head.value
-    end
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">empty?</span>
+    head<span style="color:#f92672">.</span>nil?
+  <span style="color:#66d9ef">end</span>
 
-  def empty?
-    head.nil?
-  end
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:head</span>
+<span style="color:#66d9ef">end</span>
 
-  attr_accessor :head
-end
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Node</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:value</span>
 
-class Node
-  attr_accessor :value
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(item, next_node)
+    @value <span style="color:#f92672">=</span> item
+    @next_node <span style="color:#f92672">=</span> next_node
+  <span style="color:#66d9ef">end</span>
 
-  def initialize(item, next_node)
-    @value = item
-    @next_node = next_node
-  end
-
-  def next
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>
     next_node
-  end
+  <span style="color:#66d9ef">end</span>
 
-  private
-  attr_accessor :next_node
-end
-</code></pre>
-
+  <span style="color:#66d9ef">private</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:next_node</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>The implementation of a linked list in an object-oriented language is straightforward. You need a <code>Node</code> that holds a <code>value</code> and a pointer to the next <code>Node</code>. A stack on top of a linked list consists of the following steps:</p>
 
 <ul>
@@ -198,25 +192,22 @@ end
 <p>With these steps completed, <code>top</code> and <code>pop</code> mean reading the value of <code>head</code> and setting <code>head</code> to the next node in the list, respectively. An empty check is just checking that <code>head</code> points to nothing.</p>
 
 <p>Here&rsquo;s how that looks like:</p>
-
-<pre><code class="language-ruby">2.3.0 :738 &gt; store = LinkedListStackContainer.new
- =&gt; #&lt;LinkedListStackContainer:0x007f9067453838 @head=nil&gt;
-2.3.0 :739 &gt; Stack.push(1, store)
- =&gt; #&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;
-2.3.0 :740 &gt; Stack.push(2, store)
- =&gt; #&lt;Node:0x007f9067443b40 @value=2, @next_node=#&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;&gt;
-2.3.0 :741 &gt; Stack.top(store)
- =&gt; 2
-2.3.0 :743 &gt; Stack.empty?(store)
- =&gt; false
-2.3.0 :744 &gt; Stack.pop(store)
- =&gt; 2
-2.3.0 :745 &gt; Stack.pop(store)
- =&gt; 1
-2.3.0 :746 &gt; Stack.empty?(store)
- =&gt; true
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">738</span> <span style="color:#f92672">&gt;</span> store <span style="color:#f92672">=</span> <span style="color:#66d9ef">LinkedListStackContainer</span><span style="color:#f92672">.</span>new
+ <span style="color:#f92672">=&gt;</span> <span style="color:#75715e">#&lt;LinkedListStackContainer:0x007f9067453838 @head=nil&gt;</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">739</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>push(<span style="color:#ae81ff">1</span>, store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#75715e">#&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">740</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>push(<span style="color:#ae81ff">2</span>, store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#75715e">#&lt;Node:0x007f9067443b40 @value=2, @next_node=#&lt;Node:0x007f906744b9d0 @value=1, @next_node=nil&gt;&gt;</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">741</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>top(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">2</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">743</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>empty?(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">false</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">744</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>pop(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">2</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">745</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>pop(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">746</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>empty?(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">true</span></code></pre></div>
 <h2 id="clojure-implementation">Clojure implementation</h2>
 
 <p>I suspect that writing a linked list in Clojure will be just as awkward as trying to hide the array as the implementation detail in Ruby. I am going to try anyway.</p>
@@ -224,50 +215,42 @@ end
 <p>Clojure has a few macros that allow programmers to write something like OO code. I&rsquo;m talking about <a href="https://clojuredocs.org/clojure.core/defprotocol">defprotocol</a> and <a href="https://clojuredocs.org/clojure.core/defrecord">defrecord</a>. I&rsquo;m going to try using those for my experiment.</p>
 
 <p>Firstly, I&rsquo;ll define a record to hold my data. The data held is the same, a <code>value</code> and a <code>next-node</code> pointer.</p>
-
-<pre><code class="language-clojure">(defrecord StackNode [val next-node])
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defrecord </span>StackNode [val next-node])</code></pre></div>
 <p>Then, I&rsquo;ll define functions that manipulate the stack. I need a helper function to resolve the top of the stack, as well as the expected ones.</p>
-
-<pre><code class="language-clojure">(defn head* [stack]
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>head* [stack]
   (cond
-    (nil? (:val stack)) nil
-    :else stack))
+    (nil? (<span style="color:#e6db74">:val</span> stack)) nil
+    <span style="color:#e6db74">:else</span> stack))
 
-(defn push* [item stack]
+(<span style="color:#66d9ef">defn </span>push* [item stack]
   (cond
-    (nil? @stack) (reset! stack (StackNode. item nil))
-    :else (reset! stack (StackNode. item (head* @stack)))))
+    (nil? <span style="color:#f92672">@</span>stack) (reset! stack (StackNode. item nil))
+    <span style="color:#e6db74">:else</span> (reset! stack (StackNode. item (head* <span style="color:#f92672">@</span>stack)))))
 
-(defn top* [stack]
-  (:val @stack))
+(<span style="color:#66d9ef">defn </span>top* [stack]
+  (<span style="color:#e6db74">:val</span> <span style="color:#f92672">@</span>stack))
 
-(defn pop* [stack]
-  (let [val (:val @stack)]
-    (reset! stack (:next-node @stack))
+(<span style="color:#66d9ef">defn </span>pop* [stack]
+  (<span style="color:#66d9ef">let </span>[val (<span style="color:#e6db74">:val</span> <span style="color:#f92672">@</span>stack)]
+    (reset! stack (<span style="color:#e6db74">:next-node</span> <span style="color:#f92672">@</span>stack))
     val))
 
-(defn empty*? [stack]
-  (nil? (top* stack)))
-
-</code></pre>
-
+(<span style="color:#66d9ef">defn </span>empty*? [stack]
+  (nil? (top* stack)))</code></pre></div>
 <p>I&rsquo;m storing the current state in an <code>atom</code>, like before, which is there are <code>reset!</code> calls in the <code>push*</code> and <code>pop*</code> functions. The logic for <code>push*</code> is fairly simple. If the <code>head*</code> returns <code>nil</code>, it means we don&rsquo;t have anything on the stack, so create a new instance of the defined record. If there is something there, create a new instance of the defined record and set its <code>next-node</code> value to the old instance.</p>
 
 <p><code>pop*</code> does nearly the opposite. It saves the value of the current instance, then resets the atom such that it points to the next instance, effectively discarding the current one.</p>
 
 <p><code>empty*?</code> and <code>top*</code> should be self-explanatory. I wanted to use <code>defprotocol</code> to define the <code>read</code>, <code>write</code>, <code>empty?</code> methods as in the Ruby version, but I still don&rsquo;t fully understand how that works. Here is my desired implementation, so maybe someone can point me in the right direction.</p>
-
-<pre><code class="language-clojure">(defprotocol MyStack
-  (read* [stack &amp; args])
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defprotocol </span>MyStack
+  (read* [stack <span style="color:#f92672">&amp;</span> args])
   (write* [item stack])
   (empty? [stack]))
 
 (extend-type clojure.lang.Atom
   MyStack
-  (read* [stack &amp; {:keys [remove] :or {remove false}}]
-    (if remove
+  (read* [stack <span style="color:#f92672">&amp;</span> {<span style="color:#e6db74">:keys</span> [remove] <span style="color:#e6db74">:or</span> {remove false}}]
+    (<span style="color:#66d9ef">if </span>remove
       (pop* stack)
       (top* stack)))
   (write* [item stack]
@@ -276,9 +259,7 @@ end
     (empty*? stack)))
 
 (read* my-stack)
-(read* my-stack {:remove true})
-</code></pre>
-
+(read* my-stack {<span style="color:#e6db74">:remove</span> true})</code></pre></div>
 <p>That&rsquo;s it for tonight. Next up, I&rsquo;ll try on the queues for a size.</p>
 <ul class="pa0">
   

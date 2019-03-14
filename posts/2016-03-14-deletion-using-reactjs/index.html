@@ -121,80 +121,71 @@ Client-side first On the client-side, I need add a small form that will submit t
 <h3 id="markup">Markup</h3>
 
 <p>Firstly, I am going to amend the <code>Link</code> component to add the delete button.</p>
-
-<pre><code class="language-html">  &lt;div className={&quot;card card-block&quot;}&gt;
-    &lt;h4 className=&quot;card-title&quot;&gt;
-      &lt;a target=&quot;_blank&quot; href={this.props.url}&gt;{this.props.title}&lt;/a&gt;
-      &lt;form onSubmit={this.handleDelete}&gt;
-        &lt;input type=&quot;submit&quot; value=&quot;X&quot;/&gt;
-      &lt;/form&gt;
-    &lt;/h4&gt;
-    &lt;p className=&quot;card-text&quot;&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-html" data-lang="html">  &lt;<span style="color:#f92672">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">{&#34;card</span> <span style="color:#a6e22e">card-block</span><span style="color:#960050;background-color:#1e0010">&#34;}</span>&gt;
+    &lt;<span style="color:#f92672">h4</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;card-title&#34;</span>&gt;
+      &lt;<span style="color:#f92672">a</span> <span style="color:#a6e22e">target</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;_blank&#34;</span> <span style="color:#a6e22e">href</span><span style="color:#f92672">=</span><span style="color:#e6db74">{this.props.url}</span>&gt;{this.props.title}&lt;/<span style="color:#f92672">a</span>&gt;
+      &lt;<span style="color:#f92672">form</span> <span style="color:#a6e22e">onSubmit</span><span style="color:#f92672">=</span><span style="color:#e6db74">{this.handleDelete}</span>&gt;
+        &lt;<span style="color:#f92672">input</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;submit&#34;</span> <span style="color:#a6e22e">value</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;X&#34;</span>/&gt;
+      &lt;/<span style="color:#f92672">form</span>&gt;
+    &lt;/<span style="color:#f92672">h4</span>&gt;
+    &lt;<span style="color:#f92672">p</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;card-text&#34;</span>&gt;
       Created by {this.props.client} at {this.props.created_at}
-    &lt;/p&gt;
-  &lt;/div&gt;
-</code></pre>
-
+    &lt;/<span style="color:#f92672">p</span>&gt;
+  &lt;/<span style="color:#f92672">div</span>&gt;</code></pre></div>
 <p>Following the pattern laid out for submitting new links, I added the simplest of forms to the title part of the link markup. The <code>onSubmit</code> handler is a local function.</p>
 
 <p>The function, much like for link creation will just pass its specific local state up to the root component that will take care of the actual request to the backend.</p>
-
-<pre><code class="language-javascript">handleDelete: function(e) {
-  e.preventDefault();
-  var id = this.props.id;
-  this.props.onLinkDelete({id: id});    
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">handleDelete</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+  <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">preventDefault</span>();
+  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">id</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">id</span>;
+  <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">onLinkDelete</span>({<span style="color:#a6e22e">id</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">id</span>});    
 }
-</code></pre>
-
+</code></pre></div>
 <h3 id="event-propagation-the-ugly-way">Event propagation&hellip;the ugly way</h3>
 
 <p>I am certain I&rsquo;m doing things the wrong way, because in order for me to have the root component do the actual communication and state rendering, I have to pass the callback function <em>all the way</em> from root component down to the lowest level.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkGroup</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+<span style="color:#75715e">// some code
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">return</span> (<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">Link</span> <span style="color:#a6e22e">onLinkDelete</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">callback</span>} <span style="color:#a6e22e">key</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">id</span>}
+                <span style="color:#a6e22e">id</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">id</span>} <span style="color:#a6e22e">title</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">title</span>}
+                <span style="color:#a6e22e">url</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">url</span>} <span style="color:#a6e22e">client</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">client</span>}
+                <span style="color:#a6e22e">created_at</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">created_at</span>} <span style="color:#960050;background-color:#1e0010">/&gt;);</span>
+<span style="color:#75715e">// more code
+</span><span style="color:#75715e"></span>});
 
-<pre><code class="language-javascript">var LinkGroup = React.createClass({
-// some code
-  return (&lt;Link onLinkDelete={callback} key={link.id}
-                id={link.id} title={link.title}
-                url={link.url} client={link.client}
-                created_at={link.created_at} /&gt;);
-// more code
-});
+<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkList</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+<span style="color:#75715e">// some code
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">return</span>(<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkGroup</span> <span style="color:#a6e22e">data</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link_group</span>}
+                    <span style="color:#a6e22e">onLinkDelete</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">callback</span>} <span style="color:#960050;background-color:#1e0010">/&gt;);</span>
+<span style="color:#75715e">// more code
+</span><span style="color:#75715e"></span>});
 
-var LinkList = React.createClass({
-// some code
-  return(&lt;LinkGroup data={link_group}
-                    onLinkDelete={callback} /&gt;);
-// more code
-});
-
-var LinkListContainer = React.createClass({
-// some code
-  &lt;LinkList data = {this.state.data}
-            onLinkDelete={this.handleLinkDelete} /&gt;
-// more code
-</code></pre>
-
+<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkListContainer</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+<span style="color:#75715e">// some code
+</span><span style="color:#75715e"></span>  <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkList</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">state</span>.<span style="color:#a6e22e">data</span>}
+            <span style="color:#a6e22e">onLinkDelete</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">handleLinkDelete</span>} <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+<span style="color:#75715e">// more code
+</span></code></pre></div>
 <p>This works, but I am sure it is <strong>not</strong> the way. I&rsquo;ll have to research more.</p>
 
 <h2 id="the-actual-event-handler">The actual event handler</h2>
 
 <p>Now that I&rsquo;m passing the handler into the correct spot and returning correct data, I&rsquo;m going to write the simplest handler that can possibly work.</p>
-
-<pre><code class="language-javascript">handleLinkDelete: function(data) {
-  $.ajax({
-    url: this.props.url + &quot;/&quot; + data.id,
-    dataType: &quot;json&quot;,
-    contentType: &quot;application/json&quot;,
-    type: &quot;DELETE&quot;,
-    success: function(data) {
-      this.setState({ data: data });
-    }.bind(this),
-    error: function(xhr, status, err) {
-      console.error(this.props.url + &quot;/&quot; + data.id, status, err.toString());
-    }.bind(this)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">handleLinkDelete</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+  <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">ajax</span>({
+    <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">id</span>,
+    <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;json&#34;</span>,
+    <span style="color:#a6e22e">contentType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;application/json&#34;</span>,
+    <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;DELETE&#34;</span>,
+    <span style="color:#a6e22e">success</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+      <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">setState</span>({ <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span> });
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>),
+    <span style="color:#a6e22e">error</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">xhr</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>) {
+      <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">id</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">toString</span>());
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>)
   });
 }
-</code></pre>
-
+</code></pre></div>
 <p>This is just the simple, standard jQuery-based AJAX call. The server will return the updated atom that the ReactJS will use to re-render the UI.</p>
 
 <p>That&rsquo;s it for tonight. Tomorrow, I&rsquo;m going to hook up the backend.</p>

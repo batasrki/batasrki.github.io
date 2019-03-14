@@ -135,77 +135,66 @@ Continuing my search for that fun high, I started looking at other technologies.
 <p>##Setup</p>
 
 <p>Since this will be a Clojure app, I&rsquo;m going to use <a href="https://github.com/weavejester/compojure">Compojure</a> as the base. Leiningen is a must, obviously, and it provides a template that generates a Compojure-flavoured skeleton.</p>
-
-<pre><code class="language-bash">$ lein new compojure read-later
-$ cd read-later &amp;&amp; ls
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ lein new compojure read-later
+$ cd read-later <span style="color:#f92672">&amp;&amp;</span> ls</code></pre></div>
 <p>Cool, the filesystem structure is there. I am going to give it a quick whirl, running <code>lein ring server</code> on the command line within the directory. A few seconds later, I see &ldquo;Hello World&rdquo; in a browser tab.</p>
 
 <p>Now that I have a running server, I&rsquo;m going to add a view that sets up the skeleton of the html page. To do that, I&rsquo;ll install <a href="https://github.com/weavejester/hiccup">Hiccup</a>. It allows me to write views in Clojure, which will then render HTML. Stopping and starting the server using <code>lein</code> will install the newly specified dependency automatically.</p>
 
 <p>OK, next, I need to add the base view and add ReactJS files.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>blog-post-app.views
+  (<span style="color:#e6db74">:require</span> [hiccup.page <span style="color:#e6db74">:refer</span> [html5 include-js include-css]]))
 
-<pre><code class="language-clojure">(ns blog-post-app.views
-  (:require [hiccup.page :refer [html5 include-js include-css]]))
-
-(defn base-page [title &amp; body]
+(<span style="color:#66d9ef">defn </span>base-page [title <span style="color:#f92672">&amp;</span> body]
   (html5
-   [:head
-    (include-css &quot;https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css&quot;)
-    [:title title]]
-   [:body
-    [:div.container-fluid
-     [:h1
-      [:a {:class :brand :href &quot;/&quot;} &quot;Particle Transporter Reborn&quot;]]
-     [:div {:id &quot;content&quot;}]]
-    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react.js&quot;)
-    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react-dom.js&quot;)
-    (include-js &quot;https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js&quot;)
-    (include-js &quot;https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js&quot;)
-    (include-js &quot;/js/core.js&quot;)]))
+   [<span style="color:#e6db74">:head</span>
+    (include-css <span style="color:#e6db74">&#34;https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css&#34;</span>)
+    [<span style="color:#e6db74">:title</span> title]]
+   [<span style="color:#e6db74">:body</span>
+    [<span style="color:#e6db74">:div.container-fluid</span>
+     [<span style="color:#e6db74">:h1</span>
+      [<span style="color:#e6db74">:a</span> {<span style="color:#e6db74">:class</span> <span style="color:#e6db74">:brand</span> <span style="color:#e6db74">:href</span> <span style="color:#e6db74">&#34;/&#34;</span>} <span style="color:#e6db74">&#34;Particle Transporter Reborn&#34;</span>]]
+     [<span style="color:#e6db74">:div</span> {<span style="color:#e6db74">:id</span> <span style="color:#e6db74">&#34;content&#34;</span>}]]
+    (include-js <span style="color:#e6db74">&#34;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react.js&#34;</span>)
+    (include-js <span style="color:#e6db74">&#34;https://cdnjs.cloudflare.com/ajax/libs/react/0.14.3/react-dom.js&#34;</span>)
+    (include-js <span style="color:#e6db74">&#34;https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js&#34;</span>)
+    (include-js <span style="color:#e6db74">&#34;https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js&#34;</span>)
+    (include-js <span style="color:#e6db74">&#34;/js/core.js&#34;</span>)]))
 
-(defn index []
+(<span style="color:#66d9ef">defn </span>index []
   (base-page
-      &quot;Saved Links - fPT&quot;))
-</code></pre>
-
+      <span style="color:#e6db74">&#34;Saved Links - fPT&#34;</span>))</code></pre></div>
 <p>I am going to reference the views file in the default <code>handler.clj</code> file and adjust the home route to render the HTML page.</p>
-
-<pre><code class="language-clojure">(ns blog-post-app.handler
-  (:require [compojure.core :refer :all]
-            [compojure.route :as route]
-            [blog-post-app.views :as views]
-            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]))
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">ns </span>blog-post-app.handler
+  (<span style="color:#e6db74">:require</span> [compojure.core <span style="color:#e6db74">:refer</span> <span style="color:#e6db74">:all</span>]
+            [compojure.route <span style="color:#e6db74">:as</span> route]
+            [blog-post-app.views <span style="color:#e6db74">:as</span> views]
+            [ring.middleware.defaults <span style="color:#e6db74">:refer</span> [wrap-defaults site-defaults]]))
 
 (defroutes app-routes
-  (GET &quot;/&quot; []
+  (GET <span style="color:#e6db74">&#34;/&#34;</span> []
        (views/index))
-  (route/not-found &quot;Not Found&quot;))
+  (route/not-found <span style="color:#e6db74">&#34;Not Found&#34;</span>))
 
-(def app
-  (wrap-defaults app-routes site-defaults))
-</code></pre>
-
+(<span style="color:#66d9ef">def </span>app
+  (wrap-defaults app-routes site-defaults))</code></pre></div>
 <p>Refreshing the page, I see the header link and an empty page. Checking the console, I see no errors, so all the JS files have been required successfully. Onto the next step, creating a ReactJS view.</p>
 
 <h2 id="reactjs-view">ReactJS view</h2>
 
 <p>The JavaScript file is straightforward to begin with.</p>
-
-<pre><code class="language-javascript">var LinkListContainer = React.createClass({
-  render: function() {
-    return (
-      &lt;section className=&quot;linkListContainer&quot;&gt;
-        &lt;LinkList data = {this.state.data} /&gt;
-      &lt;/section&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkListContainer</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+    <span style="color:#66d9ef">return</span> (
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">section</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;linkListContainer&#34;</span><span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkList</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">state</span>.<span style="color:#a6e22e">data</span>} <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/section&gt;</span>
     );
   }
 });
 
-ReactDOM.render(&lt;LinkListContainer url=&quot;/api/links&quot; /&gt;, document.getElementById(&quot;content&quot;));
-</code></pre>
-
+<span style="color:#a6e22e">ReactDOM</span>.<span style="color:#a6e22e">render</span>(<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkListContainer</span> <span style="color:#a6e22e">url</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/api/links&#34;</span> <span style="color:#960050;background-color:#1e0010">/&gt;, document.getElementById(&#34;content&#34;));</span>
+</code></pre></div>
 <p>I specified the top-level component and the child component that will do most of the work. The top-level component is given a URL from which data will be fetched and an HTML element that it should render into.</p>
 
 <p>That&rsquo;s it for part 1. Next, I will specify the data source and render out the links.</p>

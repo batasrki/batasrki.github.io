@@ -125,35 +125,26 @@ In tonight&rsquo;s installment&hellip; I am going to start working the trickier 
 <p>What I would like to do first is fetch the title of the posted URL. This will enable me to have a nice description of the link I saved. I need a library to which I can give a URL and have it fetch the HTML of the page. It would be nice if it could also parse that HTML. The most popular library in Clojure that does this is called <a href="https://github.com/cgrand/enlive">Enlive</a>.</p>
 
 <p>As usual, I&rsquo;m going to add the library to the <code>project.clj</code> file and require it in the <code>handler.clj</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; in project.clj, in the :dependencies vector</span>
+[enlive <span style="color:#e6db74">&#34;1.1.5&#34;</span>]
 
-<pre><code class="language-clojure">;; in project.clj, in the :dependencies vector
-[enlive &quot;1.1.5&quot;]
-
-;; in handler.clj
-(:require [net.cgrand.enlive-html :as html])
-</code></pre>
-
+<span style="color:#75715e">;; in handler.clj</span>
+(<span style="color:#e6db74">:require</span> [net.cgrand.enlive-html <span style="color:#e6db74">:as</span> html])</code></pre></div>
 <p>With that done, I need to add a few methods to fetch and parse HTML.</p>
-
-<pre><code class="language-clojure">(defn fetch-url [url]
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>fetch-url [url]
   (with-open [inputstream (-&gt; (java.net.URL. url)
                               .openConnection
-                              (doto (.setRequestProperty &quot;User-Agent&quot;
-                                                         &quot;ReadLaterCrawler/1.0 ...&quot;))
+                              (doto (.setRequestProperty <span style="color:#e6db74">&#34;User-Agent&#34;</span>
+                                                         <span style="color:#e6db74">&#34;ReadLaterCrawler/1.0 ...&#34;</span>))
                               .getContent)]
-    (html/html-resource inputstream)))
-</code></pre>
-
+    (html/html-resource inputstream)))</code></pre></div>
 <p>This is the first function where Clojure&rsquo;s interop with Java starts to show. Using the Java&rsquo;s URL library to get open the connection, the code threads that connection through a few things ending with the <code>getContent</code> function. Enlive then turns that resource into a map that I can iterate over. A quick REPL test shows me how this looks.</p>
 
 <p><img src="/images/enlive-repl.png" alt="enlive repl" /></p>
 
 <p>OK, I have a map representing the HTML, I need to get at the title.</p>
-
-<pre><code class="language-clojure">(defn get-title [url]
-  (first (map html/text (html/select (fetch-url url) [:title]))))
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>get-title [url]
+  (first (map html/text (html/select (fetch-url url) [<span style="color:#e6db74">:title</span>]))))</code></pre></div>
 <p>Enlive lets me select the element based on a vector I pass in. Since I all I want is a title, it&rsquo;s a simple vector being passed in. <code>html/select</code> takes the map of HTML and the selector vector and gives me back a map representing the selected thing.</p>
 
 <p><img src="/images/enlive-repl-2.png" alt="enlive repl 2" /></p>
@@ -165,16 +156,13 @@ In tonight&rsquo;s installment&hellip; I am going to start working the trickier 
 <h3 id="integration">Integration</h3>
 
 <p>Now that I have that working, I am going to do a simple integration into the current flow. POSTing the new link will block until the title is extracted, which is what <code>core.async</code> will solve.</p>
-
-<pre><code class="language-clojure">;; in POST
-(POST &quot;/api/links&quot; request
-  (let [next-id (inc (apply max (map #(:id %) @links)))
-        new-link (:body request)
-        new-link-with-fields (assoc new-link :id next-id :title (get-title (:url new-link)) :created_at &quot;2015-12-15&quot;)]
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; in POST</span>
+(POST <span style="color:#e6db74">&#34;/api/links&#34;</span> request
+  (<span style="color:#66d9ef">let </span>[next-id (inc (apply max (map <span style="color:#f92672">#</span>(<span style="color:#e6db74">:id</span> %) <span style="color:#f92672">@</span>links)))
+        new-link (<span style="color:#e6db74">:body</span> request)
+        new-link-with-fields (assoc new-link <span style="color:#e6db74">:id</span> next-id <span style="color:#e6db74">:title</span> (get-title (<span style="color:#e6db74">:url</span> new-link)) <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-15&#34;</span>)]
     (swap! links conj new-link-with-fields)
-    (json/write-str @links)))
-</code></pre>
-
+    (json/write-str <span style="color:#f92672">@</span>links)))</code></pre></div>
 <p>The change I made is in <code>assoc</code>, where instead of <code>:title (:url new-link)</code>, I now have <code>:title (get-title (:url new-link))</code>. This should block while getting the title.</p>
 
 <p><img src="/images/sync-save.gif" alt="sync save" /></p>

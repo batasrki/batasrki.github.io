@@ -135,24 +135,21 @@ Stack using an list in Clojure and an array in Ruby A stack is known as a Last I
 <p>My appreciation of Clojure&rsquo;s coolness is well-documented on this blog. This appreciation continues here. There are a few sequence-like data structures in Clojure, such as a <code>list</code>, <code>vector</code>, and <code>map</code>. For a while, I was confused as to the need for both a <code>list</code> and a <code>vector</code>. Tonight, though, the difference is clear and useful. A <code>list</code> is optimized for pushing to the front of it. A <code>vector</code> is optimized for pushing to the rear of it. This makes writing code for this blog post that much easier.</p>
 
 <p>I&rsquo;ll use the <code>list</code> as the basis for my stack.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">def </span>my-stack (atom <span style="color:#f92672">&#39;</span>()))
 
-<pre><code class="language-clojure">(def my-stack (atom '()))
-
-(defn push* [item stack]
+(<span style="color:#66d9ef">defn </span>push* [item stack]
   (swap! stack conj item))
 
-(defn top* [stack]
-  (first @stack))
+(<span style="color:#66d9ef">defn </span>top* [stack]
+  (first <span style="color:#f92672">@</span>stack))
 
-(defn pop* [stack]
-  (let [item (top* stack)]
-    (reset! stack (rest @stack))
+(<span style="color:#66d9ef">defn </span>pop* [stack]
+  (<span style="color:#66d9ef">let </span>[item (top* stack)]
+    (reset! stack (rest <span style="color:#f92672">@</span>stack))
     item))
 
-(defn empty*? [stack]
-  (= 0 (count @stack)))
-</code></pre>
-
+(<span style="color:#66d9ef">defn </span>empty*? [stack]
+  (= <span style="color:#ae81ff">0</span> (count <span style="color:#f92672">@</span>stack)))</code></pre></div>
 <p>I&rsquo;m sticking the list in an atom in order to keep state around. I&rsquo;m also adding <code>*</code> to the function names, so as not to clobber the built-in Clojure functions.</p>
 
 <p><code>push*</code>, <code>top*</code> and <code>empty*?</code> are straightforward to implement. Pushing onto the stack involves using <code>conj</code> on the <code>list</code> data structure which will add things to the front of the list. Returning the top element without removing it is also simple, as is comparing the number of items in the list to 0, which is our empty check.</p>
@@ -160,90 +157,81 @@ Stack using an list in Clojure and an array in Ruby A stack is known as a Last I
 <p><code>pop*</code> is a little trickier, as it&rsquo;s a two step process. I need to remove the item from the stack, as well as return it. I can actually reuse <code>top*</code> for the first step and then reset my atom to the rest of the list as a means of removing that first one.</p>
 
 <p>Here is how the API works:</p>
-
-<pre><code class="language-clojure">user&gt; (use 'array-stack)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">user&gt; (use <span style="color:#e6db74">&#39;array-stack</span>)
 nil
-user&gt; @my-stack
-'()
-user&gt; (push* 1 my-stack)
-(1)
-user&gt; (push* 2 my-stack)
-(2 1)
+user&gt; <span style="color:#f92672">@</span>my-stack
+<span style="color:#f92672">&#39;</span>()
+user&gt; (push* <span style="color:#ae81ff">1</span> my-stack)
+(<span style="color:#ae81ff">1</span>)
+user&gt; (push* <span style="color:#ae81ff">2</span> my-stack)
+(<span style="color:#ae81ff">2</span> <span style="color:#ae81ff">1</span>)
 user&gt; (top* my-stack)
-2
+<span style="color:#ae81ff">2</span>
 user&gt; (pop* my-stack)
-2
-user&gt; @my-stack
-(1)
+<span style="color:#ae81ff">2</span>
+user&gt; <span style="color:#f92672">@</span>my-stack
+(<span style="color:#ae81ff">1</span>)
 user&gt; (empty*? my-stack)
 false
 user&gt; (pop* my-stack)
-1
+<span style="color:#ae81ff">1</span>
 user&gt; (empty*? my-stack)
-true
-</code></pre>
-
+true</code></pre></div>
 <p>Nice! As I keep saying, well-designed languages make things so easy to use. I wonder if I&rsquo;ll be able to do this as easily in Ruby.</p>
 
 <h3 id="ruby-implementation">Ruby implementation</h3>
 
 <p>Since everything in Ruby is an object, that&rsquo;s what I&rsquo;ll start with. Now, Ruby only has a <code>vector</code> implementation, which might writing a stack implementation a bit more challenging. Luckily, the one thing I don&rsquo;t need to worry about is the size of the stack.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyStack</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:store</span>
 
-<pre><code class="language-ruby">class MyStack
-  attr_accessor :store
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>
+    @store <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+  <span style="color:#66d9ef">end</span>
 
-  def initialize
-    @store = []
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">push</span>(item)
+    store<span style="color:#f92672">.</span>insert(<span style="color:#ae81ff">0</span>, item)
+  <span style="color:#66d9ef">end</span>
 
-  def push(item)
-    store.insert(0, item)
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">top</span>
+    store<span style="color:#f92672">.</span>first
+  <span style="color:#66d9ef">end</span>
 
-  def top
-    store.first
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">pop</span>
+    store<span style="color:#f92672">.</span>shift
+  <span style="color:#66d9ef">end</span>
 
-  def pop
-    store.shift
-  end
-
-  def empty?
-    store.count == 0
-  end
-end
-</code></pre>
-
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">empty?</span>
+    store<span style="color:#f92672">.</span>count <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>Huh. It&rsquo;s actually pretty simple, as well. Well, after I dug into <a href="http://docs.ruby-lang.org/en/2.0.0/Array.html">Ruby&rsquo;s Array docs</a>, it got simple. The <code>insert</code> method is pretty nice, though I suspect it is not nice at all from a performance point of view.</p>
 
 <p>Here&rsquo;s the API as implemented in Ruby:</p>
-
-<pre><code class="language-ruby">2.3.0 :065 &gt; stack = MyStack.new
- =&gt; #&lt;MyStack:0x007fd2fd0e87b0 @store=[]&gt;
-2.3.0 :066 &gt; stack.push 1
- =&gt; [1]
-2.3.0 :067 &gt; stack.push 2
- =&gt; [2, 1]
-2.3.0 :068 &gt; stack.push 3
- =&gt; [3, 2, 1]
-2.3.0 :069 &gt; stack.top
- =&gt; 3
-2.3.0 :070 &gt; stack.store
- =&gt; [3, 2, 1]
-2.3.0 :071 &gt; stack.pop
- =&gt; 3
-2.3.0 :072 &gt; stack.store
- =&gt; [2, 1]
-2.3.0 :073 &gt; stack.empty?
- =&gt; false
-2.3.0 :074 &gt; stack.pop
- =&gt; 2
-2.3.0 :075 &gt; stack.pop
- =&gt; 1
-2.3.0 :076 &gt; stack.empty?
- =&gt; true
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">065</span> <span style="color:#f92672">&gt;</span> stack <span style="color:#f92672">=</span> <span style="color:#66d9ef">MyStack</span><span style="color:#f92672">.</span>new
+ <span style="color:#f92672">=&gt;</span> <span style="color:#75715e">#&lt;MyStack:0x007fd2fd0e87b0 @store=[]&gt;</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">066</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>push <span style="color:#ae81ff">1</span>
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">067</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>push <span style="color:#ae81ff">2</span>
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">06</span><span style="color:#ae81ff">8</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>push <span style="color:#ae81ff">3</span>
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">06</span><span style="color:#ae81ff">9</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>top
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">3</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">070</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>store
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">071</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>pop
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">3</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">072</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>store
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">073</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>empty?
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">false</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">074</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>pop
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">2</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">075</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>pop
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">076</span> <span style="color:#f92672">&gt;</span> stack<span style="color:#f92672">.</span>empty?
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">true</span></code></pre></div>
 <h2 id="reflect-and-conclude">Reflect and conclude</h2>
 
 <p>I think this is a good stopping point. Soon <em>(I was going to say tomorrow night, but let&rsquo;s face it, these posts aren&rsquo;t that regular)</em>, I will implement a queue using the <code>list</code>/<code>vector</code> data structures. I suspect that it will be equally as easy.</p>
@@ -253,73 +241,67 @@ end
 <p>In Clojure, not only did I separate the functions that operate on the data structure from itself, I also managed to reuse a function I just created in order to implement another. To me, this is one of the core principles of functional programming and of Clojure. Each function is a self-contained unit of work that operates on the parameters passed into it. I could have just assumed that the <code>atom</code> holding my list is just available, but I am already in the habit of not making that assumption.</p>
 
 <p>On the other hand, my habit in Ruby is to create a class that contains the data that I need to perform computations on and the functions that do those computations. This is the most-straightforward way to do things in Ruby. It falls squarely on the language&rsquo;s golden path. I could, with greater effort, to do what I did in Clojure. I could have made two classes, one as the container of the underlying data and another that holds the functions to operate on it.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">StackContainer</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>
+    @store <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+  <span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">class StackContainer
-  def initialize
-    @store = []
-  end
-
-  def write(item)
-    store.insert(0, item)
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">write</span>(item)
+    store<span style="color:#f92672">.</span>insert(<span style="color:#ae81ff">0</span>, item)
     store
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def read(remove: false)
-    if remove
-      store.shift
-    else
-      store.first
-    end
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">read</span>(<span style="color:#e6db74">remove</span>: <span style="color:#66d9ef">false</span>)
+    <span style="color:#66d9ef">if</span> remove
+      store<span style="color:#f92672">.</span>shift
+    <span style="color:#66d9ef">else</span>
+      store<span style="color:#f92672">.</span>first
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
 
-  def empty?
-    store.count == 0
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">empty?</span>
+    store<span style="color:#f92672">.</span>count <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>
+  <span style="color:#66d9ef">end</span>
 
-  private
-  attr_accessor :store
-end
+  <span style="color:#66d9ef">private</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:store</span>
+<span style="color:#66d9ef">end</span>
 
-class Stack
-  def self.push(item, store)
-    store.write(item)
-  end
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Stack</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">push</span>(item, store)
+    store<span style="color:#f92672">.</span>write(item)
+  <span style="color:#66d9ef">end</span>
 
-  def self.top(store)
-    store.read
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">top</span>(store)
+    store<span style="color:#f92672">.</span>read
+  <span style="color:#66d9ef">end</span>
 
-  def self.pop(store)
-    store.read(remove: true)
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">pop</span>(store)
+    store<span style="color:#f92672">.</span>read(<span style="color:#e6db74">remove</span>: <span style="color:#66d9ef">true</span>)
+  <span style="color:#66d9ef">end</span>
 
-  def self.empty?(store)
-    store.empty?
-  end
-end
-</code></pre>
-
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">empty?</span>(store)
+    store<span style="color:#f92672">.</span>empty?
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>Usage:</p>
-
-<pre><code class="language-ruby">2.3.0 :271 &gt; store=StackContainer.new
- =&gt; #&lt;StackContainer:0x007f9068550c08 @store=[]&gt;
-2.3.0 :272 &gt; Stack.push(1, store)
- =&gt; [1]
-2.3.0 :273 &gt; Stack.push(10, store)
- =&gt; [10, 1]
-2.3.0 :274 &gt; Stack.empty?(store)
- =&gt; false
-2.3.0 :275 &gt; Stack.top(store)
- =&gt; 10
-2.3.0 :276 &gt; Stack.pop(store)
- =&gt; 10
-2.3.0 :277 &gt; Stack.pop(store)
- =&gt; 1
-2.3.0 :278 &gt; Stack.empty?(store)
- =&gt; true
-2.3.0 :279 &gt;
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">271</span> <span style="color:#f92672">&gt;</span> store<span style="color:#f92672">=</span><span style="color:#66d9ef">StackContainer</span><span style="color:#f92672">.</span>new
+ <span style="color:#f92672">=&gt;</span> <span style="color:#75715e">#&lt;StackContainer:0x007f9068550c08 @store=[]&gt;</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">272</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>push(<span style="color:#ae81ff">1</span>, store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">273</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>push(<span style="color:#ae81ff">10</span>, store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span><span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">1</span><span style="color:#f92672">]</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">274</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>empty?(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">false</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">275</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>top(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">10</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">276</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>pop(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">10</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">277</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>pop(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">1</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">278</span> <span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">Stack</span><span style="color:#f92672">.</span>empty?(store)
+ <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">true</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span><span style="color:#ae81ff">3</span><span style="color:#f92672">.</span><span style="color:#ae81ff">0</span> :<span style="color:#ae81ff">279</span> <span style="color:#f92672">&gt;</span></code></pre></div>
 <p><del>I am likely over-complicating things, but that is because this style of writing code in Ruby is totally unfamiliar to me. Also, the underlying implementation is leaking through. I probably need to abstract further, but I honestly don&rsquo;t know how. On further thought, the initial design looks better to me, as I only expose a very limited set of functions and I can change the underlying data structure and the implementations of the API functions. However, it&rsquo;s also possible that a user of my stack API will realize that it&rsquo;s really an array and start to depend on that.</del></p>
 
 <p>EDIT: With help from my peeps at (Practicing Developer&rsquo;s Slack channel)[<a href="https://practicingdeveloper.com/">https://practicingdeveloper.com/</a>], I actually came up with a nicer implementation that doesn&rsquo;t necessarily leak.</p>

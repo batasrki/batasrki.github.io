@@ -119,126 +119,104 @@ Let&rsquo;s go I&rsquo;m guessing I can post straight from Javascript, but I&rsq
 <p>I&rsquo;m guessing I can post straight from Javascript, but I&rsquo;d like to track how links I share will be received. I can have a <code>core.async</code> process somewhere poll the Facebook API and get data. I&rsquo;ll have to associate post IDs with the links I share.</p>
 
 <p>I&rsquo;ve created a Facebook App from my account. The next thing to do is copy the given JS into a file somewhere. I&rsquo;m choosing to create a new file <code>js/fb-integration.js</code> and require it in the <code>views.clj</code> file at the end of the <code>body</code> declaration.</p>
-
-<pre><code class="language-clojure">(include-js &quot;/js/fb-integration.js&quot;)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(include-js <span style="color:#e6db74">&#34;/js/fb-integration.js&#34;</span>)</code></pre></div>
 <p>After loading the app in the browser and checking there are no errors, I&rsquo;m ready to do the next step. I want to log in and get permissions to post on a Facebook Page. I don&rsquo;t need to do this unless there&rsquo;s a desire to post a link to Facebook. So, I&rsquo;m going to add a button into the <code>Link</code> component much like the delete button already added. The markup for the <code>Link</code> component looks like this now.</p>
-
-<pre><code class="language-javascript">&lt;div className={&quot;card card-block&quot;}&gt;
-  &lt;h4 className=&quot;card-title&quot;&gt;
-    &lt;a target=&quot;_blank&quot; href={this.props.url}&gt;{this.props.title}&lt;/a&gt;
-    &lt;form onSubmit={this.handleDelete}&gt;
-      &lt;input type=&quot;submit&quot; value=&quot;X&quot;/&gt;
-    &lt;/form&gt;
-    &lt;!-- THE NEW THING! --&gt;
-    &lt;form onSubmit={this.handleFBShare}&gt;
-      &lt;input type=&quot;submit&quot; value=&quot;Share!&quot; /&gt;
-    &lt;/form&gt;
-    &lt;!-- END --&gt;
-  &lt;/h4&gt;
-  &lt;p className=&quot;card-text&quot;&gt;
-    Created by {this.props.client} at {this.props.created_at}
-  &lt;/p&gt;
-&lt;/div&gt;
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;card card-block&#34;</span>}<span style="color:#f92672">&gt;</span>
+  <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">h4</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;card-title&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">a</span> <span style="color:#a6e22e">target</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;_blank&#34;</span> <span style="color:#a6e22e">href</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>}<span style="color:#f92672">&gt;</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">title</span>}<span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/a&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">form</span> <span style="color:#a6e22e">onSubmit</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">handleDelete</span>}<span style="color:#f92672">&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">input</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;submit&#34;</span> <span style="color:#a6e22e">value</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;X&#34;</span><span style="color:#960050;background-color:#1e0010">/&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/form&gt;</span>
+    <span style="color:#75715e">&lt;!--</span> <span style="color:#a6e22e">THE</span> <span style="color:#a6e22e">NEW</span> <span style="color:#a6e22e">THING</span><span style="color:#f92672">!</span> <span style="color:#f92672">--&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">form</span> <span style="color:#a6e22e">onSubmit</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">handleFBShare</span>}<span style="color:#f92672">&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">input</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;submit&#34;</span> <span style="color:#a6e22e">value</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Share!&#34;</span> <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/form&gt;</span>
+    <span style="color:#75715e">&lt;!--</span> <span style="color:#a6e22e">END</span> <span style="color:#f92672">--&gt;</span>
+  <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/h4&gt;</span>
+  <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">p</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;card-text&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#a6e22e">Created</span> <span style="color:#a6e22e">by</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">client</span>} <span style="color:#a6e22e">at</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">created_at</span>}
+  <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/p&gt;</span>
+<span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+</code></pre></div>
 <p>I now need to figure out how to invoke the log in modal and have it ask for permissions. Additionally, I need to find out what permissions I need. The documentation seems to suggest that I need the <code>manage_pages</code> and <code>publish_pages</code> permissions, so I&rsquo;ll add that to the scope of permissions requested on log in. A few experiments in the browser yields results I want to see.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">FB</span>.<span style="color:#a6e22e">login</span>(<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">resp</span>) { <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">resp</span>) },
+         {<span style="color:#a6e22e">scope</span><span style="color:#f92672">:</span> [<span style="color:#e6db74">&#39;manage_pages&#39;</span>, <span style="color:#e6db74">&#39;publish_pages&#39;</span>]});
 
-<pre><code class="language-javascript">FB.login(function(resp) { console.log(resp) },
-         {scope: ['manage_pages', 'publish_pages']});
+<span style="color:#75715e">//returns
+</span><span style="color:#75715e"></span>{<span style="color:#a6e22e">authResponse</span><span style="color:#f92672">:</span> Object, <span style="color:#a6e22e">status</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;connected&#34;</span>}
 
-//returns
-{authResponse: Object, status: &quot;connected&quot;}
+<span style="color:#a6e22e">FB</span>.<span style="color:#a6e22e">api</span>(<span style="color:#e6db74">&#39;/me/accounts&#39;</span>, <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">resp</span>) { <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">resp</span>) });
 
-FB.api('/me/accounts', function(resp) { console.log(resp) });
-
-//returns
-{data: Array[2], paging: Object}
-</code></pre>
-
+<span style="color:#75715e">//returns
+</span><span style="color:#75715e"></span>{<span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> Array[<span style="color:#ae81ff">2</span>], <span style="color:#a6e22e">paging</span><span style="color:#f92672">:</span> Object}
+</code></pre></div>
 <p>The <code>FB.api</code> call returns a list of pages with their IDs and access tokens that I can use to publish links to. I&rsquo;m going to send that info to the Clojure backend and see what happens.</p>
 
 <h2 id="initial-front-end-implementation">Initial front-end implementation</h2>
 
 <p>Since this is an experiment, I&rsquo;m not concerned with the code quality. I just want it to work. Propagating the event from the <code>Link</code> component to the <code>LinkListContainer</code> component works much the same way as it did in the link deletion. I&rsquo;m going to chain callbacks, which is widely accepted as &ldquo;the wrong thing to do&rdquo;, so don&rsquo;t do this in a real application. The event handler will log in, ask for all the pages using the <code>/me/accounts</code> endpoint, grab the JS object representing the page I&rsquo;d like to post to, and then send that page&rsquo;s access token and ID to the server. The server will use that information to actually make the post.</p>
-
-<pre><code class="language-javascript">// handlers above
-handleFBShare: function(data) {
-  var parent = this;
-  FB.login(function(response) {
-    if(response.status === &quot;connected&quot;) {
-      FB.api(&quot;/me/accounts&quot;, function(response) {
-        var link_experiments_page = response.data.filter(function(page) {
-          if(page.name === &quot;Link Experiments&quot;) {
-            return page;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#75715e">// handlers above
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">handleFBShare</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">parent</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>;
+  <span style="color:#a6e22e">FB</span>.<span style="color:#a6e22e">login</span>(<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">response</span>) {
+    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">status</span> <span style="color:#f92672">===</span> <span style="color:#e6db74">&#34;connected&#34;</span>) {
+      <span style="color:#a6e22e">FB</span>.<span style="color:#a6e22e">api</span>(<span style="color:#e6db74">&#34;/me/accounts&#34;</span>, <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">response</span>) {
+        <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">link_experiments_page</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">response</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">filter</span>(<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">page</span>) {
+          <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">page</span>.<span style="color:#a6e22e">name</span> <span style="color:#f92672">===</span> <span style="color:#e6db74">&#34;Link Experiments&#34;</span>) {
+            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">page</span>;
           }
-        })[0];
-        $.ajax({
-          url: parent.props.url + &quot;/&quot; + data.id + &quot;/share&quot;,
-          dataType: &quot;json&quot;,
-          contentType: &quot;application/json&quot;,
-          type: &quot;POST&quot;,
-          data: JSON.stringify({access_token: link_experiments_page.access_token, page_id: link_experiments_page.id}),
-          success: function(data) {
-            console.log(data);
-          }.bind(parent),
-          error: function(xhr, status, err) {
-            console.error(parent.props.url +&quot;/&quot; + data.id + &quot;/share&quot;, status, err.toString());
-          }.bind(parent)
+        })[<span style="color:#ae81ff">0</span>];
+        <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">ajax</span>({
+          <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">parent</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">id</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/share&#34;</span>,
+          <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;json&#34;</span>,
+          <span style="color:#a6e22e">contentType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;application/json&#34;</span>,
+          <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;POST&#34;</span>,
+          <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>({<span style="color:#a6e22e">access_token</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">link_experiments_page</span>.<span style="color:#a6e22e">access_token</span>, <span style="color:#a6e22e">page_id</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">link_experiments_page</span>.<span style="color:#a6e22e">id</span>}),
+          <span style="color:#a6e22e">success</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+            <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">data</span>);
+          }.<span style="color:#a6e22e">bind</span>(<span style="color:#a6e22e">parent</span>),
+          <span style="color:#a6e22e">error</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">xhr</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>) {
+            <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#a6e22e">parent</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span> <span style="color:#f92672">+</span><span style="color:#e6db74">&#34;/&#34;</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">id</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;/share&#34;</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">toString</span>());
+          }.<span style="color:#a6e22e">bind</span>(<span style="color:#a6e22e">parent</span>)
         });
       });
     }
   });
 }
-// render below
-</code></pre>
-
+<span style="color:#75715e">// render below
+</span></code></pre></div>
 <p>Clicking on the <code>Share</code> button illicits a 404, since the server has no endpoint set up. That&rsquo;s up next.</p>
 
 <h2 id="initial-server-side-implementation">Initial server-side implementation</h2>
 
 <p>This should be as easy as adding a route and a function that responds to the request.</p>
-
-<pre><code class="language-clojure">(defn post-link-to-facebook
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>post-link-to-facebook
   [request]
   (println request)
-  (let [id (Integer/parseInt (get-in request [:path-params :id]))]
-    (ring-resp/response (json/write-str @links))))
-</code></pre>
-
+  (<span style="color:#66d9ef">let </span>[id (Integer/parseInt (get-in request [<span style="color:#e6db74">:path-params</span> <span style="color:#e6db74">:id</span>]))]
+    (ring-resp/response (json/write-str <span style="color:#f92672">@</span>links))))</code></pre></div>
 <p>All I want to do is inspect the request, but as I expected, this is simple. I really like well-designed languages and libraries. The data I sent from the client shows up in the <code>json-params</code> map, so I can extract the access token and the page ID as easily as the link ID.</p>
 
 <p>I&rsquo;m going to create a function that will take in the above data and make a post. I need to pull in the great <code>http-kit</code> library, as well, so that I can make HTTP requests in a simple manner. Firstly, I&rsquo;m going to fill out the rest of the handler function.</p>
-
-<pre><code class="language-clojure">
-(defn post-link-to-facebook
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>post-link-to-facebook
   [request]
-  (let [link-id (Integer/parseInt (get-in request [:path-params :id]))
-        link (first (filter #(= (:id %)) @links))
-        page-id (get-in request [:json-params :page_id])
-        access-token (get-in request [:json-params :access_token])]
+  (<span style="color:#66d9ef">let </span>[link-id (Integer/parseInt (get-in request [<span style="color:#e6db74">:path-params</span> <span style="color:#e6db74">:id</span>]))
+        link (first (filter <span style="color:#f92672">#</span>(= (<span style="color:#e6db74">:id</span> %)) <span style="color:#f92672">@</span>links))
+        page-id (get-in request [<span style="color:#e6db74">:json-params</span> <span style="color:#e6db74">:page_id</span>])
+        access-token (get-in request [<span style="color:#e6db74">:json-params</span> <span style="color:#e6db74">:access_token</span>])]
     (create-a-post page-id access-token link)
-    (ring-resp/response (json/write-str @links))))
-</code></pre>
-
+    (ring-resp/response (json/write-str <span style="color:#f92672">@</span>links))))</code></pre></div>
 <p>With that done, I&rsquo;m ready to actually make a post. Firstly, I&rsquo;m adding <code>http-kit</code> to the list of required libraries.</p>
-
-<pre><code class="language-clojure">(:require [org.httpkit.client :as http]
-          ;; all the other things)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#e6db74">:require</span> [org.httpkit.client <span style="color:#e6db74">:as</span> http]
+          <span style="color:#75715e">;; all the other things)</span></code></pre></div>
 <p>Now, I&rsquo;m going to write a quick-and-dirty function to do the posting. I need to hit the <code>graph.facebook.com</code> domain with the ID of the page and its access token. The <code>message</code> field is the actual thing shown. I&rsquo;ll keep this field really simple right now.</p>
-
-<pre><code class="language-clojure">(defn create-a-post [fb-page-id fb-page-token link]
-  (let [post-url (str &quot;https://graph.facebook.com/&quot; fb-page-id &quot;/feed?message=Look%20at%20this%20link%20&quot; (:url link) &quot;&amp;access_token=&quot; fb-page-token)
-        {:keys [status headers body error] :as resp} @(http/post post-url)]
-    (if error
-      (println &quot;Failed, exception: &quot; error)
-      (println &quot;Success, status: &quot; status))
-  ))
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>create-a-post [fb-page-id fb-page-token link]
+  (<span style="color:#66d9ef">let </span>[post-url (str <span style="color:#e6db74">&#34;https://graph.facebook.com/&#34;</span> fb-page-id <span style="color:#e6db74">&#34;/feed?message=Look%20at%20this%20link%20&#34;</span> (<span style="color:#e6db74">:url</span> link) <span style="color:#e6db74">&#34;&amp;access_token=&#34;</span> fb-page-token)
+        {<span style="color:#e6db74">:keys</span> [status headers body error] <span style="color:#e6db74">:as</span> resp} <span style="color:#f92672">@</span>(http/post post-url)]
+    (<span style="color:#66d9ef">if </span>error
+      (println <span style="color:#e6db74">&#34;Failed, exception: &#34;</span> error)
+      (println <span style="color:#e6db74">&#34;Success, status: &#34;</span> status))
+  ))</code></pre></div>
 <p>If I now reload the app and click <code>Share</code>, I get a post on the desired Facebook Page!</p>
 
 <p><img src="/images/facebook-post.png" alt="facebook post" /></p>

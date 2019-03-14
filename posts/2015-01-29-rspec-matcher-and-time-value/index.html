@@ -134,38 +134,29 @@ As many experienced Ruby programmers have seen, the failure looks like this:"/>
 <h2 id="equality-things">Equality things</h2>
 
 <p>One of the possible reasons why this spec failed is that while the datetime values match down to the second, they&rsquo;re probably mismatching on the millisecond. The accepted solution is to use the <em>be_within</em> matcher.</p>
-
-<pre><code class="language-ruby">it &quot;should match as close as possible&quot; do
-  expect(time_value_under_test).to be_within(0.1).of(expected_time_value)
-end
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">it <span style="color:#e6db74">&#34;should match as close as possible&#34;</span> <span style="color:#66d9ef">do</span>
+  expect(time_value_under_test)<span style="color:#f92672">.</span>to be_within(<span style="color:#ae81ff">0</span><span style="color:#f92672">.</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>of(expected_time_value)
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>If you&rsquo;re comparing time or date/time values, you can stop there. However, my use case has a twist on it. Instead of comparing whether or not the time value is what I expect, I wanted to ensure that the method I&rsquo;m calling is passed the appropriate time values.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WaitlistNotifier</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">alert_matching</span>(datetime_start, datetime_end)
+<span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">class WaitlistNotifier
-  def alert_matching(datetime_start, datetime_end)
-end
-
-describe SomeController do
-  it &quot;should pass the appropriate time values to the notifier&quot; do
-      expect(WaitlistNotifier).to receive(:alert_matching).with(start_time, end_time)
-  end
-end
-</code></pre>
-
+describe <span style="color:#66d9ef">SomeController</span> <span style="color:#66d9ef">do</span>
+  it <span style="color:#e6db74">&#34;should pass the appropriate time values to the notifier&#34;</span> <span style="color:#66d9ef">do</span>
+      expect(<span style="color:#66d9ef">WaitlistNotifier</span>)<span style="color:#f92672">.</span>to receive(<span style="color:#e6db74">:alert_matching</span>)<span style="color:#f92672">.</span>with(start_time, end_time)
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>As you can see, I don&rsquo;t care if the values are equal down to the millisecond, all I care is that it&rsquo;s the appropriate value passed in. RSpec makes no such distinction, nor should it.</p>
 
 <p>Having consulted a few peeps on Twitter, including <a href="https://twitter.com/myronmarston">Myron Marston</a>, I got my answer. The <em>be_within</em> matcher can be used within a <em>with</em> call!</p>
-
-<pre><code class="language-ruby">describe SomeController do
-  it &quot;should pass the appropriate time values to the notifier&quot; do
-      expect(WaitlistNotifier).to receive(:alert_matching).
-      								with(a_value_within(1).of(start_time),
-      								     a_value_within(1).of(end_time))
-  end
-end
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">describe <span style="color:#66d9ef">SomeController</span> <span style="color:#66d9ef">do</span>
+  it <span style="color:#e6db74">&#34;should pass the appropriate time values to the notifier&#34;</span> <span style="color:#66d9ef">do</span>
+      expect(<span style="color:#66d9ef">WaitlistNotifier</span>)<span style="color:#f92672">.</span>to receive(<span style="color:#e6db74">:alert_matching</span>)<span style="color:#f92672">.</span>
+      								with(a_value_within(<span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>of(start_time),
+      								     a_value_within(<span style="color:#ae81ff">1</span>)<span style="color:#f92672">.</span>of(end_time))
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>According to the <a href="http://rspec.info/documentation/3.2/rspec-expectations/RSpec/Matchers.html#be_within-instance_method">RSpec documentation</a>, <em>a_value_within</em> is an alias of <em>be_within</em>.</p>
 
 <p>I think this is a pretty cool and pretty powerful part of RSpec and I confess that I was not aware of it AT ALL.</p>

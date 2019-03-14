@@ -137,87 +137,75 @@ This took a while I expected this feature to be done very quickly. Up to now, ev
 <p>I want to try and re-construct this painful process, because I truly believe that others will get snagged on this rough edge in Pedestal. Maybe, just maybe, providing a failure case and a solution in this <del>widely</del> blog series will help someone somewhere.</p>
 
 <p>Adapting the code from the guide I linked above, I end up with something roughly like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; Add another channel to the set there already.</span>
+<span style="color:#75715e">;; This channel will receive the link with the title applied</span>
+<span style="color:#75715e">;; It will then forward that onto the SSE channel completing the pipeline</span>
+(<span style="color:#66d9ef">def </span>update-chan (chan))
 
-<pre><code class="language-clojure">;; Add another channel to the set there already.
-;; This channel will receive the link with the title applied
-;; It will then forward that onto the SSE channel completing the pipeline
-(def update-chan (chan))
-
-;; Put the record on the channel after processing it
-(defn update-atom []
+<span style="color:#75715e">;; Put the record on the channel after processing it</span>
+(<span style="color:#66d9ef">defn </span>update-atom []
   (go
-   (let [record (&lt;! title-chan)]
-     (log/trace &quot;Got title&quot; (:title record))
-     (log/trace &quot;Updating the atom&quot;)
+   (<span style="color:#66d9ef">let </span>[record (&lt;! title-chan)]
+     (log/trace <span style="color:#e6db74">&#34;Got title&#34;</span> (<span style="color:#e6db74">:title</span> record))
+     (log/trace <span style="color:#e6db74">&#34;Updating the atom&#34;</span>)
      (swap! links update-title record)
      (&gt;! update-chan record))))
 
-;; SSE functions as I understand them being needed
+<span style="color:#75715e">;; SSE functions as I understand them being needed</span>
 
-;; This one does the actual work
-(defn stream-link-updates [channel]
+<span style="color:#75715e">;; This one does the actual work</span>
+(<span style="color:#66d9ef">defn </span>stream-link-updates [channel]
   (go
-   (let [record (&lt;! update-chan)]
-     (&gt;! channel {:name &quot;link-update&quot; :data (json/write-str record)}))))
+   (<span style="color:#66d9ef">let </span>[record (&lt;! update-chan)]
+     (&gt;! channel {<span style="color:#e6db74">:name</span> <span style="color:#e6db74">&#34;link-update&#34;</span> <span style="color:#e6db74">:data</span> (json/write-str record)}))))
 
-;; This one is called by the route setup below and is the inital point into the whole thing
-(defn stream-ready [channel ctx]
+<span style="color:#75715e">;; This one is called by the route setup below and is the inital point into the whole thing</span>
+(<span style="color:#66d9ef">defn </span>stream-ready [channel ctx]
   (stream-link-updates channel))
 
-;; This is added to `defroutes` to set up a SSE streaming
-[&quot;/stream&quot; {:get [::stream (sse/start-event-stream stream-ready)]}]
-</code></pre>
-
+<span style="color:#75715e">;; This is added to `defroutes` to set up a SSE streaming</span>
+[<span style="color:#e6db74">&#34;/stream&#34;</span> {<span style="color:#e6db74">:get</span> [<span style="color:#e6db74">::stream</span> (sse/start-event-stream stream-ready)]}]</code></pre></div>
 <p>This is the server-side implementation <em>as I understand it</em> and how I would like it to fit into my app. Since <code>core.async</code> allows me to set up a pipeline, I would like the SSE event to be at the end of that pipeline. I&rsquo;ve used <code>go</code> blocks for all pipeline parts, so it makes sense to me to do so here, too.</p>
 
 <p>I need to name the event, so that I can attach a JS listener to it and convert the record into JSON in order to send it to the client.</p>
-
-<pre><code class="language-javascript">var evtSource = new EventSource(&quot;/stream&quot;);
-evtSource.onmessage = function(e) {
-    console.log(&quot;in onmessage&quot;);
-    console.log(e);
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">evtSource</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">EventSource</span>(<span style="color:#e6db74">&#34;/stream&#34;</span>);
+<span style="color:#a6e22e">evtSource</span>.<span style="color:#a6e22e">onmessage</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#34;in onmessage&#34;</span>);
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>);
 }
 
-evtSource.onerror = function(e) {
-    console.log(&quot;in onerror&quot;);
-    console.log(e);
+<span style="color:#a6e22e">evtSource</span>.<span style="color:#a6e22e">onerror</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#34;in onerror&#34;</span>);
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>);
 }
 
-evtSource.addEventListener(&quot;link-update&quot;, function(e) {
-    console.log(&quot;in event listener&quot;);
-    console.log(e);
-    console.log(JSON.parse(e.data))
+<span style="color:#a6e22e">evtSource</span>.<span style="color:#a6e22e">addEventListener</span>(<span style="color:#e6db74">&#34;link-update&#34;</span>, <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#e6db74">&#34;in event listener&#34;</span>);
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">e</span>);
+    <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">parse</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">data</span>))
 });
-
-</code></pre>
-
+</code></pre></div>
 <p>I&rsquo;m keeping the JS side extremely simple for now. All I want to see is an event in the console log every time I submit a link.</p>
 
 <p>With all that set up, I fire up the REPL and start the app server.</p>
 
 <pre><code>lein repl
 </code></pre>
-
-<pre><code class="language-clojure">blog-post-app.server=&gt;(run-dev)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">blog-post-app.server=&gt;(run-dev)</code></pre></div>
 <p>I visit <code>http://localhost:8080</code>, post a test link and I get a result! Whoop, there it is. I post another, nothing.</p>
 
 <p><img src="/images/wth.png" alt="what the hell" /></p>
 
 <p>What is going on? How can I one work, but not another? I reload the browser and in the console, I see the expected event. This tells me that the record was put to <code>update-chan</code>, but it never got picked up on the other side and sent to the browser. In the REPL log output, I notice this exception:</p>
-
-<pre><code class="language-clojure">ERROR i.p.http.impl.servlet-interceptor - {:line 105, :msg &quot;An error occured when async writing to the client&quot;, :throwable #error {
- :cause &quot;Broken pipe&quot;
- :via
- [{:type org.eclipse.jetty.io.EofException
-   :message nil
-   :at [org.eclipse.jetty.io.ChannelEndPoint flush &quot;ChannelEndPoint.java&quot; 200]}
-  {:type java.io.IOException
-   :message &quot;Broken pipe&quot;
-   :at [sun.nio.ch.FileDispatcherImpl write0 &quot;FileDispatcherImpl.java&quot; -2]}]
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">ERROR i.p.http.impl.servlet-interceptor - {<span style="color:#e6db74">:line</span> <span style="color:#ae81ff">105</span>, <span style="color:#e6db74">:msg</span> <span style="color:#e6db74">&#34;An error occured when async writing to the client&#34;</span>, <span style="color:#e6db74">:throwable</span> <span style="color:#f92672">#</span>error {
+ <span style="color:#e6db74">:cause</span> <span style="color:#e6db74">&#34;Broken pipe&#34;</span>
+ <span style="color:#e6db74">:via</span>
+ [{<span style="color:#e6db74">:type</span> org.eclipse.jetty.io.EofException
+   <span style="color:#e6db74">:message</span> nil
+   <span style="color:#e6db74">:at</span> [org.eclipse.jetty.io.ChannelEndPoint flush <span style="color:#e6db74">&#34;ChannelEndPoint.java&#34;</span> <span style="color:#ae81ff">200</span>]}
+  {<span style="color:#e6db74">:type</span> java.io.IOException
+   <span style="color:#e6db74">:message</span> <span style="color:#e6db74">&#34;Broken pipe&#34;</span>
+   <span style="color:#e6db74">:at</span> [sun.nio.ch.FileDispatcherImpl write0 <span style="color:#e6db74">&#34;FileDispatcherImpl.java&#34;</span> <span style="color:#ae81ff">-2</span>]}]</code></pre></div>
 <p>Broken pipe means that a connection got shut down uncleanly on one side of it. That does not match my understanding of things. Pedestal is supposed to be keeping that connection open for me. It says in that guide that it sets up a heartbeat to ensure that. Why does it shut down uncleanly then?</p>
 
 <h2 id="the-quest">The quest&hellip;</h2>
@@ -225,14 +213,10 @@ evtSource.addEventListener(&quot;link-update&quot;, function(e) {
 <p>I then went off to find the reason why this happened and how I can fix it. I first opened an <a href="https://github.com/pedestal/pedestal/issues/384">issue</a> in Pedestal&rsquo;s Github repo, even though I didn&rsquo;t ever believe that it was a bug. I guess this is the accepted norm in the Ruby community and I got used to it. One of the maintainers was polite, helped me out a bit with the code and pointed me to the mailing list. I would like to note, though, that the first thing he says I should be aware of isn&rsquo;t supported by the guides. In the guide, the <code>stream-ready-fn</code> clearly sets up a function that sends events. I have not seen <em>any</em> counter-examples, but maybe my searching skills aren&rsquo;t up to par.</p>
 
 <p>The crucial thing in that explanation is that I need a <code>go-loop</code> function rather than a <code>go</code> one. OK, that&rsquo;s easy to fix.</p>
-
-<pre><code class="language-clojure">(defn stream-link-updates [channel]
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>stream-link-updates [channel]
   (go-loop []
-   (let [record (&lt;! update-chan)]
-     (&gt;! channel {:name &quot;link-update&quot; :data (json/write-str record)}))))
-
-</code></pre>
-
+   (<span style="color:#66d9ef">let </span>[record (&lt;! update-chan)]
+     (&gt;! channel {<span style="color:#e6db74">:name</span> <span style="color:#e6db74">&#34;link-update&#34;</span> <span style="color:#e6db74">:data</span> (json/write-str record)}))))</code></pre></div>
 <p>I add <code>go-loop</code> to the list of functions referred to from <code>core.async</code>, reload the server, run the same test process, and I get the same result. This time, though, I get the broken pipe error almost immediately after the successful SSE message.</p>
 
 <p>I post to the <a href="https://groups.google.com/forum/#!topic/pedestal-users/J8oj33cg_e0">mailing list next</a>, as suggested by the maintainer. I&rsquo;ve yet to receive a response there. I then turn to the <a href="https://clojurians.slack.com">Clojurians Slack channel</a>. People here are awesome and I am grateful for their help and understanding.</p>
@@ -242,16 +226,13 @@ evtSource.addEventListener(&quot;link-update&quot;, function(e) {
 <h2 id="the-solution">The solution&hellip;</h2>
 
 <p>This goes back to me not fully understanding nor reading through Pedestal documentation. Jonah said off-handedly that Pedestal&rsquo;s interceptors always take a parameter when they&rsquo;re being called. SSE was just another interceptor and I should have my functions return either the event channel or context all the way back to the original <code>stream-ready</code> function. This is exactly what I ended up doing.</p>
-
-<pre><code class="language-clojure">;; Loop, but always return the event channel that was passed in
-(defn stream-link-updates [channel]
-  (loop []
-    (let [record (&lt;!! update-chan)]
-      (&gt;!! channel {:name &quot;link-update&quot; :data (json/write-str record)})
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; Loop, but always return the event channel that was passed in</span>
+(<span style="color:#66d9ef">defn </span>stream-link-updates [channel]
+  (<span style="color:#66d9ef">loop </span>[]
+    (<span style="color:#66d9ef">let </span>[record (&lt;!! update-chan)]
+      (&gt;!! channel {<span style="color:#e6db74">:name</span> <span style="color:#e6db74">&#34;link-update&#34;</span> <span style="color:#e6db74">:data</span> (json/write-str record)})
       (recur)))
-  channel)
-</code></pre>
-
+  channel)</code></pre></div>
 <p>Actually, I ended up doing a hybrid of two advices. I return the channel as advised by Jonah, but I also make sure that I set up an infinite loop, because I don&rsquo;t know when the next update will come. As I expected initially, this makes the whole thing work.</p>
 
 <p><img src="/images/yay.png" alt="yay" /></p>

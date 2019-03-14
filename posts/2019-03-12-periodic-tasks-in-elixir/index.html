@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Periodic Tasks in Elixir</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Periodic Tasks in Elixir" />
+<meta property="og:description" content="Tonight, I&rsquo;ll attempt to set up a Task that runs on some schedule and have it populate the Postgres database.
+Quick background I built myself a link-saving site in Ruby, using Sinatra and fully backed by Redis. The site runs fine and I have a tonne of content saved. Amusingly for me, this content mirrors my career progression from the time I built the site until now. In spirit of learning Elixir, I&rsquo;m rebuilding the site with it and backed by Postgres." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://batasrki.github.io/posts/2019-03-12-periodic-tasks-in-elixir/" />
+<meta property="article:published_time" content="2019-03-13T20:07:38-04:00"/>
+<meta property="article:modified_time" content="2019-03-13T20:07:38-04:00"/>
+
+<meta itemprop="name" content="Periodic Tasks in Elixir">
+<meta itemprop="description" content="Tonight, I&rsquo;ll attempt to set up a Task that runs on some schedule and have it populate the Postgres database.
+Quick background I built myself a link-saving site in Ruby, using Sinatra and fully backed by Redis. The site runs fine and I have a tonne of content saved. Amusingly for me, this content mirrors my career progression from the time I built the site until now. In spirit of learning Elixir, I&rsquo;m rebuilding the site with it and backed by Postgres.">
+
+
+<meta itemprop="datePublished" content="2019-03-13T20:07:38-04:00" />
+<meta itemprop="dateModified" content="2019-03-13T20:07:38-04:00" />
+<meta itemprop="wordCount" content="463">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Periodic Tasks in Elixir"/>
+<meta name="twitter:description" content="Tonight, I&rsquo;ll attempt to set up a Task that runs on some schedule and have it populate the Postgres database.
+Quick background I built myself a link-saving site in Ruby, using Sinatra and fully backed by Redis. The site runs fine and I have a tonne of content saved. Amusingly for me, this content mirrors my career progression from the time I built the site until now. In spirit of learning Elixir, I&rsquo;m rebuilding the site with it and backed by Postgres."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  
+  
+  <header class="cover bg-top" style="background-image: url('https://batasrki.github.io/images/periodic_task.png');">
+    <div class="pb3-m pb6-l bg-black-60">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="https://batasrki.github.io/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv6 ph3 ph4-ns">
+        
+      </div>
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Periodic Tasks in Elixir</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2019-03-13T20:07:38-04:00">March 13, 2019</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>Tonight, I&rsquo;ll attempt to set up a Task that runs on some schedule and have it populate the Postgres database.</p>
+
+<h2 id="quick-background">Quick background</h2>
+
+<p>I built myself a <a href="https://s2dd.ca">link-saving site</a> in Ruby, using Sinatra and fully backed by Redis. The site runs fine and I have a tonne of content saved. Amusingly for me, this content mirrors my career progression from the time I built the site until now. In spirit of learning Elixir, I&rsquo;m rebuilding the site with it and backed by Postgres. This will allow me to more easily build some needed features going forward.</p>
+
+<h2 id="periodic-task">Periodic task</h2>
+
+<p>However, tonight all I need is a way to move the saved links from Redis to Postgres. This way, I can have my regular site up and running and being used, while I build out the set of features I want before I deem the site operational.</p>
+
+<p>The easy way to do this is, of course, just to copy out the data manually and use the <code>iex</code> REPL to load it into Postgres. But, this is my project to learn things and that means I get to over-engineer solutions! So, instead, I am going to dig into the support for running a one-off task and figuring out how to schedule its run.</p>
+
+<h3 id="redis-extraction">Redis extraction</h3>
+
+<p>Firstly, I need to write a function to query Redis for a list of records. I store the links in a sorted set, keyed by the Unix timestamp of the insertion time. So, to pull only the latest links, I need to pass in a Unix timestamp of the last exported link and map over the results to get a list of <code>Map</code>s.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir">def list(from_timestamp) do
+  <span style="color:#a6e22e">Process</span><span style="color:#f92672">.</span>whereis(<span style="color:#e6db74">:registered_redis_connection</span>)
+  <span style="color:#f92672">|&gt;</span> <span style="color:#a6e22e">Exredis.Api</span><span style="color:#f92672">.</span>zrangebyscore(<span style="color:#e6db74">&#34;key&#34;</span>, from_timestamp, <span style="color:#e6db74">&#34;+inf&#34;</span>)
+  <span style="color:#f92672">|&gt;</span> <span style="color:#a6e22e">Enum</span><span style="color:#f92672">.</span>map(fn(item) <span style="color:#f92672">-&gt;</span> <span style="color:#a6e22e">Poison.Parser</span><span style="color:#f92672">.</span>parse!(item) end)
+end</code></pre></div>
+<p>Next, I&rsquo;m going to build a module that utilizes this code. The module needs to read the latest record from the existing table, convert the timestamp to a Unix format, invoke the above code, and then create new records in Postgres.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir">defmodule <span style="color:#a6e22e">Links.PostgresImporter</span> do
+  def convert_timestamp(nil) do
+    <span style="color:#e6db74">&#34;-inf&#34;</span>
+  end
+
+  def convert_timestamp(timestamp) do
+    <span style="color:#a6e22e">DateTime</span><span style="color:#f92672">.</span>to_unix(timestamp)
+  end
+
+  def fetch_redis_records(key, from_timestamp) do
+    <span style="color:#a6e22e">Links.RedisRepo</span><span style="color:#f92672">.</span>list_recent(key, convert_timestamp(from_timestamp))
+  end
+end</code></pre></div>
+<p>The <code>convert_timestamp</code> functions probably should be private, but I&rsquo;m keeping them public for now to keep them testable. Adding to this code is a way to create Postgres records and it will all be tied together by a function that will stitch these functions together with <code>|&gt;</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir">def persist_records(redis_records) do
+  <span style="color:#a6e22e">Links.Repo</span><span style="color:#f92672">.</span>batch_save!(redis_records)
+end</code></pre></div>
+<p>In the DB layer, I&rsquo;m using the <a href="https://hexdocs.pm/moebius/">Moebius library</a>. It provides a nice bulk insert API that makes this operation transactionally safe as well as a one-liner. Now, it&rsquo;s time to stitch it all together.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir">def import(key, from_timestamp) do
+  fetch_redis_records(key, from_timestamp)
+  <span style="color:#f92672">|&gt;</span> persist_records()
+end</code></pre></div>
+<p>Nice and neat way of importing Redis data into Postgres. With that sorted, onto the next task!</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="https://batasrki.github.io/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

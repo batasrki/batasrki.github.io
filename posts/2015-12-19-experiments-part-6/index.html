@@ -31,7 +31,7 @@
     <meta property="og:title" content="Experiments part 6" />
 <meta property="og:description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
 Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
-;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes." />
+;; in project.clj [org.clojure/core.async &#34;0.2.374&#34;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]]) This library is based on concepts presented in a book called Communicating Sequential Processes." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://batasrki.github.io/posts/2015-12-19-experiments-part-6/" />
 <meta property="article:published_time" content="2015-12-19T20:23:01-05:00"/>
@@ -40,7 +40,7 @@ Let&rsquo;s async this thing OK, I want to get the quick response back, but stil
 <meta itemprop="name" content="Experiments part 6">
 <meta itemprop="description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
 Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
-;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.">
+;; in project.clj [org.clojure/core.async &#34;0.2.374&#34;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]]) This library is based on concepts presented in a book called Communicating Sequential Processes.">
 
 
 <meta itemprop="datePublished" content="2015-12-19T20:23:01-05:00" />
@@ -54,7 +54,7 @@ Let&rsquo;s async this thing OK, I want to get the quick response back, but stil
 <meta name="twitter:title" content="Experiments part 6"/>
 <meta name="twitter:description" content="Previously in Experiments, part 5,&hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
 Let&rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
-;; in project.clj [org.clojure/core.async &quot;0.2.374&quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes."/>
+;; in project.clj [org.clojure/core.async &#34;0.2.374&#34;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]]) This library is based on concepts presented in a book called Communicating Sequential Processes."/>
 
   </head>
 
@@ -122,45 +122,39 @@ Let&rsquo;s async this thing OK, I want to get the quick response back, but stil
 <h2 id="let-s-async-this-thing">Let&rsquo;s async this thing</h2>
 
 <p>OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce <code>core.async</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; in project.clj</span>
+[org.clojure/core.async <span style="color:#e6db74">&#34;0.2.374&#34;</span>]
 
-<pre><code class="language-clojure">;; in project.clj
-[org.clojure/core.async &quot;0.2.374&quot;]
-
-;; in handler.clj's require
-(:require [clojure.core.async :as async :refer [&gt;! &lt; ! chan go]])
-</code></pre>
-
+<span style="color:#75715e">;; in handler.clj&#39;s require</span>
+(<span style="color:#e6db74">:require</span> [clojure.core.async <span style="color:#e6db74">:as</span> async <span style="color:#e6db74">:refer</span> [&gt;! &lt; ! chan go]])</code></pre></div>
 <p>This library is based on concepts presented in a book called <a href="http://www.usingcsp.com/cspbook.pdf">Communicating Sequential Processes</a>. The core premise is that certain types of tasks can be handed off to a different process/thread, much like how web developers use background queues to do tasks like sending e-mail, etc. The beautiful thing about Clojure&rsquo;s implementation is that it&rsquo;s just a set of macros around core language features. That book is really worth reading. I am saying that more to myself than anyone else reading this.</p>
 
 <p>Using this library, I am going to set up a pipeline that does the synchronous fetch-and-parse in an asynchronous way. For that, I need to set up 2 channels and a few functions that put values and take values from the channel and update things in the background.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">def </span>request-chan (chan))
+(<span style="color:#66d9ef">def </span>title-chan (chan))
 
-<pre><code class="language-clojure">(def request-chan (chan))
-(def title-chan (chan))
-
-(defn update-title [data record]
-  (map #(if (= (:id record) (:id %))
-          (assoc % :title (:title record))
+(<span style="color:#66d9ef">defn </span>update-title [data record]
+  (map <span style="color:#f92672">#</span>(<span style="color:#66d9ef">if </span>(= (<span style="color:#e6db74">:id</span> record) (<span style="color:#e6db74">:id</span> %))
+          (assoc % <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:title</span> record))
           %) data))
 
-(defn update-atom []
+(<span style="color:#66d9ef">defn </span>update-atom []
   (go
-   (let [record (&lt; ! title-chan)]
-     (println &quot;Got title&quot; (:title record))
-     (println &quot;Updating the atom&quot;)
+   (<span style="color:#66d9ef">let </span>[record (&lt; ! title-chan)]
+     (println <span style="color:#e6db74">&#34;Got title&#34;</span> (<span style="color:#e6db74">:title</span> record))
+     (println <span style="color:#e6db74">&#34;Updating the atom&#34;</span>)
      (swap! links update-title record))))
 
-(defn async-get-title []
+(<span style="color:#66d9ef">defn </span>async-get-title []
   (go
-   (let [record (&lt; ! request-chan)]
-     (println &quot;Got the request, processing....&quot;)
-     (&gt;! title-chan (assoc record :title (get-title (:url record)))))))
+   (<span style="color:#66d9ef">let </span>[record (&lt; ! request-chan)]
+     (println <span style="color:#e6db74">&#34;Got the request, processing....&#34;</span>)
+     (&gt;! title-chan (assoc record <span style="color:#e6db74">:title</span> (get-title (<span style="color:#e6db74">:url</span> record)))))))
 
-(defn async-request-title [new-link]
+(<span style="color:#66d9ef">defn </span>async-request-title [new-link]
   (go
-   (println &quot;Putting the request on channel&quot;)
-   (&gt;! request-chan new-link)))
-</code></pre>
-
+   (println <span style="color:#e6db74">&#34;Putting the request on channel&#34;</span>)
+   (&gt;! request-chan new-link)))</code></pre></div>
 <p>Reading from the bottom up, the code does the following steps.</p>
 
 <ol>
@@ -172,36 +166,30 @@ Let&rsquo;s async this thing OK, I want to get the quick response back, but stil
 <p>Because the update is done in the background, I won&rsquo;t see the effect until server reload, but that&rsquo;s fine for now. I have plans for that (did someone say <a href="https://en.wikipedia.org/wiki/Server-sent_events">Server-sent Events</a>). Programming can be so much fun, sometimes.</p>
 
 <p>I want to explain the <code>update-title</code> function before moving on, though. Here&rsquo;s the source for it, again.</p>
-
-<pre><code class="language-clojure">(defn update-title [data record]
-  (map #(if (= (:id record) (:id %))
-          (assoc % :title (:title record))
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>update-title [data record]
+  (map <span style="color:#f92672">#</span>(<span style="color:#66d9ef">if </span>(= (<span style="color:#e6db74">:id</span> record) (<span style="color:#e6db74">:id</span> %))
+          (assoc % <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:title</span> record))
           %) data))
 
-;; called with
-;; (swap! links update-title record)
-</code></pre>
-
+<span style="color:#75715e">;; called with</span>
+<span style="color:#75715e">;; (swap! links update-title record)</span></code></pre></div>
 <p>The function loops over the list of links, which are represented as hashmaps. If the <code>id</code> of the current item is equal to the one we want to update, we update the <code>title</code> value. If not, we keep just copy the link map into the new data set. I admit, this is a lot of rigmarole, but again, it&rsquo;s fun to try not use a database as a crutch. Once I do commit to having a database, this code will likely go away.</p>
 
 <h2 id="integrating-the-new-way">Integrating the new way</h2>
 
 <p>Now that there&rsquo;s a way for me to update the atom, I need to integrate that into the flow of a web request.</p>
-
-<pre><code class="language-clojure">(GET &quot;/&quot; []
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(GET <span style="color:#e6db74">&#34;/&#34;</span> []
   (async-get-title)
   (update-atom)
   (views/index))
 
-(POST &quot;/api/links&quot; request
-  (let [next-id (inc (apply max (map #(:id %) @links)))
-        new-link (:body request)
-        new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-15&quot;)]
+(POST <span style="color:#e6db74">&#34;/api/links&#34;</span> request
+  (<span style="color:#66d9ef">let </span>[next-id (inc (apply max (map <span style="color:#f92672">#</span>(<span style="color:#e6db74">:id</span> %) <span style="color:#f92672">@</span>links)))
+        new-link (<span style="color:#e6db74">:body</span> request)
+        new-link-with-fields (assoc new-link <span style="color:#e6db74">:id</span> next-id <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:url</span> new-link) <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-15&#34;</span>)]
     (async-request-title new-link-with-fields)
     (swap! links conj new-link-with-fields)
-    (json/write-str @links)))
-</code></pre>
-
+    (json/write-str <span style="color:#f92672">@</span>links)))</code></pre></div>
 <p>When I load the view, I call the 2 background functions, so that <code>go</code> blocks are set up. The <code>go</code> blocks are where putting and taking from channels are executed. These functions will wait for new input to come in, but since I am not interested in the return value, calling them returns immediately.</p>
 
 <p>The code that creates a link is changed, as well. Firstly, the synchronous fetch is reverted back to what I had initially, where <code>title</code> is the URL. Then, just before adding the new link, a request is submitted for the title attribute of the URL. This kicks off the asynchronous pipeline.</p>

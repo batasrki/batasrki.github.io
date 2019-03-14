@@ -120,26 +120,20 @@ First, a confession It took me nearly a month to write the follow-up post for a 
 <h2 id="first-a-confession">First, a confession</h2>
 
 <p>It took me nearly a month to write the follow-up post for a few reasons, but the chief problem was this piece of code:</p>
-
-<pre><code class="language-clojure">(defn destroy-link [request]
-   (let [id (get-in request [:path-params :id])]
-    (reset! links (remove #(= id (:id %)) @links))
-    ;; one more line below
-)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>destroy-link [request]
+   (<span style="color:#66d9ef">let </span>[id (get-in request [<span style="color:#e6db74">:path-params</span> <span style="color:#e6db74">:id</span>])]
+    (reset! links (remove <span style="color:#f92672">#</span>(= id (<span style="color:#e6db74">:id</span> %)) <span style="color:#f92672">@</span>links))
+    <span style="color:#75715e">;; one more line below</span>
+)</code></pre></div>
 <p>This looks straightforward, and it should be. Get an ID from the path parameters, match it to the ID key of each map in the list of maps, and remove the map whose value under the ID key matches the passed in parameter. However, this piece of code doesn&rsquo;t work. Worse yet, it&rsquo;s not reproducible in the REPL, if you try to substitute the parameter with its value.</p>
 
 <h2 id="dumb-mistakes">Dumb mistakes</h2>
 
 <p>The reason the above code doesn&rsquo;t work is that the path parameter is a string, not an integer. <code>(= &quot;1&quot; 1)</code> returns false and I don&rsquo;t know how I feel about that. It is a dumb assumption on my part that either Clojure or Pedestal will do conversion for me or maybe it&rsquo;s my lack of knowledge about the framework. In either case, the fix is simple.</p>
-
-<pre><code class="language-clojure">(defn destroy-link [request]
-  (let [id (get-in request [:path-params :id])]
-    (reset! links (remove #(= (Integer/parseInt id) (:id %)) @links))
-    (ring-resp/response (json/write-str @links))))
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">defn </span>destroy-link [request]
+  (<span style="color:#66d9ef">let </span>[id (get-in request [<span style="color:#e6db74">:path-params</span> <span style="color:#e6db74">:id</span>])]
+    (reset! links (remove <span style="color:#f92672">#</span>(= (Integer/parseInt id) (<span style="color:#e6db74">:id</span> %)) <span style="color:#f92672">@</span>links))
+    (ring-resp/response (json/write-str <span style="color:#f92672">@</span>links))))</code></pre></div>
 <p>Casting the string to an integer makes the <code>remove</code> function work correctly, which then allows me to set a new state for the <code>links</code> atom.</p>
 
 <h2 id="moving-on">Moving on</h2>

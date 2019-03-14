@@ -41,7 +41,7 @@ Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clo
 
 
 
-<meta itemprop="wordCount" content="1545">
+<meta itemprop="wordCount" content="1544">
 
 
 
@@ -125,14 +125,10 @@ Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clo
 <p>Out of the currently known CRDTs, the one that seems to fit this problem the best is the GSet, or Grow-only Set, data type. As its name suggests, this CRDT only ever grows in size, it does not shrink. Since recommendation engines thrive on tonnes of data, having an ever-increasing set of records is very beneficial.</p>
 
 <p>The basic layout of a GSet is as follows:</p>
-
-<pre><code class="language-json">{
-  'type': 'g-set',
-  'e': ['a', 'b', 'c']
-}
-
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{
+  <span style="color:#960050;background-color:#1e0010">&#39;type&#39;:</span> <span style="color:#960050;background-color:#1e0010">&#39;g-set&#39;,</span>
+  <span style="color:#960050;background-color:#1e0010">&#39;e&#39;:</span> <span style="color:#960050;background-color:#1e0010">[&#39;a&#39;,</span> <span style="color:#960050;background-color:#1e0010">&#39;b&#39;,</span> <span style="color:#960050;background-color:#1e0010">&#39;c&#39;]</span>
+}</code></pre></div>
 <p>The type information there is for the <a href="https://github.com/aphyr/meangirls">meangirls library</a> to invoke the correct operational semantics. Other than that, it&rsquo;s just a simple list of data, always growing in size. Only, the <strong>meangirls</strong> library does not include a class for a GSet. It has a class for TwoPhaseSet, which is a combination of two GSets, but it doesn&rsquo;t actually implement a GSet by itself.</p>
 
 <p>That&rsquo;s not a big deal, we will implement one ourselves.</p>
@@ -140,175 +136,156 @@ Use case For the purpose of this post, imagine we&rsquo;re running a Netflix clo
 <h2 id="gset-implementation">GSet implementation</h2>
 
 <p>Since it has fairly simple requirement, let&rsquo;s take a look at the GSet class. I&rsquo;ll explain parts of it after the code listing.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby gset.rb" data-lang="ruby gset.rb"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">GSet</span> <span style="color:#f92672">&lt;</span> <span style="color:#66d9ef">Meangirls</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Set</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:a</span>
 
-<pre><code class="language-ruby">class GSet &lt; Meangirls::Set
-  attr_accessor :a
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(hash<span style="color:#f92672">=</span><span style="color:#66d9ef">nil</span>)
+    <span style="color:#66d9ef">if</span> hash
+      <span style="color:#66d9ef">raise</span> <span style="color:#66d9ef">ArgumentError</span>, <span style="color:#e6db74">&#34;hash must contain a&#34;</span> <span style="color:#66d9ef">unless</span> hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;a&#39;</span><span style="color:#f92672">]</span>
 
-  def initialize(hash=nil)
-    if hash
-      raise ArgumentError, &quot;hash must contain a&quot; unless hash['a']
+      @a <span style="color:#f92672">=</span> <span style="color:#66d9ef">Set</span><span style="color:#f92672">.</span>new hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;a&#39;</span><span style="color:#f92672">]</span>
+    <span style="color:#66d9ef">else</span>
+      <span style="color:#75715e"># Empty set</span>
+      @a <span style="color:#f92672">=</span> <span style="color:#66d9ef">Set</span><span style="color:#f92672">.</span>new
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
 
-      @a = Set.new hash['a']
-    else
-      # Empty set
-      @a = Set.new
-    end
-  end
-
-  def &lt;&lt;(e)
-    @a &lt;&lt; e
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">&lt;&lt;</span>(e)
+    @a <span style="color:#f92672">&lt;&lt;</span> e
     self
-  end
-  alias add &lt;&lt;
+  <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">alias</span> add <span style="color:#f92672">&lt;&lt;</span>
 
-  def ==(other)
-    other.kind_of?(self.class) &amp;&amp; a == other.a
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">==</span>(other)
+    other<span style="color:#f92672">.</span>kind_of?(self<span style="color:#f92672">.</span>class) <span style="color:#f92672">&amp;&amp;</span> a <span style="color:#f92672">==</span> other<span style="color:#f92672">.</span>a
+  <span style="color:#66d9ef">end</span>
 
-  def as_json
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">as_json</span>
     {
-      'type' =&gt; type,
-      'a' =&gt; a.to_a 
+      <span style="color:#e6db74">&#39;type&#39;</span> <span style="color:#f92672">=&gt;</span> type,
+      <span style="color:#e6db74">&#39;a&#39;</span> <span style="color:#f92672">=&gt;</span> a<span style="color:#f92672">.</span>to_a 
     }
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def clone
-    c = super
-    c.a = a.clone
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">clone</span>
+    c <span style="color:#f92672">=</span> <span style="color:#66d9ef">super</span>
+    c<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> a<span style="color:#f92672">.</span>clone
     c
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def merge(other)
-    unless other.kind_of? self.class
-      raise ArgumentError, &quot;other must be a #{self.class}&quot;
-    end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">merge</span>(other)
+    <span style="color:#66d9ef">unless</span> other<span style="color:#f92672">.</span>kind_of? self<span style="color:#f92672">.</span>class
+      <span style="color:#66d9ef">raise</span> <span style="color:#66d9ef">ArgumentError</span>, <span style="color:#e6db74">&#34;other must be a </span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>class<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+    <span style="color:#66d9ef">end</span>
 
-    self.class.new('a' =&gt; (a | other.a))
-  end
+    self<span style="color:#f92672">.</span>class<span style="color:#f92672">.</span>new(<span style="color:#e6db74">&#39;a&#39;</span> <span style="color:#f92672">=&gt;</span> (a <span style="color:#f92672">|</span> other<span style="color:#f92672">.</span>a))
+  <span style="color:#66d9ef">end</span>
 
-  def include?(e)
-    @a.include? e
-  end
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">include?</span>(e)
+    @a<span style="color:#f92672">.</span>include? e
+  <span style="color:#66d9ef">end</span>
 
-  def to_set
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">to_set</span>
     @a
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def type
-    'g-set'
-  end
-end
-</code></pre>
-
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">type</span>
+    <span style="color:#e6db74">&#39;g-set&#39;</span>
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>If you peek at <strong>meangirls</strong> implementation of a <code>TwoPhaseSet</code>, you will notice that we copied most of its code into here, save for the <em>remove set</em> logic. Let&rsquo;s go through the important parts.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(hash<span style="color:#f92672">=</span><span style="color:#66d9ef">nil</span>)
+  <span style="color:#66d9ef">if</span> hash
+    <span style="color:#66d9ef">raise</span> <span style="color:#66d9ef">ArgumentError</span>, <span style="color:#e6db74">&#34;hash must contain a&#34;</span> <span style="color:#66d9ef">unless</span> hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;a&#39;</span><span style="color:#f92672">]</span>
 
-<pre><code class="language-ruby">def initialize(hash=nil)
-  if hash
-    raise ArgumentError, &quot;hash must contain a&quot; unless hash['a']
-
-    @a = Set.new hash['a']
-  else
-    # Empty set
-    @a = Set.new
-  end
-end
-</code></pre>
-
+    @a <span style="color:#f92672">=</span> <span style="color:#66d9ef">Set</span><span style="color:#f92672">.</span>new hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;a&#39;</span><span style="color:#f92672">]</span>
+  <span style="color:#66d9ef">else</span>
+    <span style="color:#75715e"># Empty set</span>
+    @a <span style="color:#f92672">=</span> <span style="color:#66d9ef">Set</span><span style="color:#f92672">.</span>new
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>Our constructor may or may not take a hash. This is done, so that we can re-construct a <code>GSet</code> from JSON data, such as a Riak record.</p>
-
-<pre><code class="language-ruby">def &lt;&lt;(e)
-  @a &lt;&lt; e
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">&lt;&lt;</span>(e)
+  @a <span style="color:#f92672">&lt;&lt;</span> e
   self
-end
-alias add &lt;&lt;
-</code></pre>
-
+<span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">alias</span> add <span style="color:#f92672">&lt;&lt;</span></code></pre></div>
 <p>We only ever add elements to our <code>GSet</code>. Additional guarantees, like that an element can only be an Integer, can be added here.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">merge</span>(other)
+  <span style="color:#66d9ef">unless</span> other<span style="color:#f92672">.</span>kind_of? self<span style="color:#f92672">.</span>class
+    <span style="color:#66d9ef">raise</span> <span style="color:#66d9ef">ArgumentError</span>, <span style="color:#e6db74">&#34;other must be a </span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>class<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+  <span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">def merge(other)
-  unless other.kind_of? self.class
-    raise ArgumentError, &quot;other must be a #{self.class}&quot;
-  end
-
-  self.class.new('a' =&gt; (a | other.a))
-end
-</code></pre>
-
+  self<span style="color:#f92672">.</span>class<span style="color:#f92672">.</span>new(<span style="color:#e6db74">&#39;a&#39;</span> <span style="color:#f92672">=&gt;</span> (a <span style="color:#f92672">|</span> other<span style="color:#f92672">.</span>a))
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>When merging, we first must ensure that we&rsquo;re merging a <code>GSet</code> to a <code>GSet</code>. We would get into weird situations and breakage, otherwise. After that, a simple set union over our 2 sets of IDs will ensure we only ever have unique ID values here.</p>
 
 <h2 id="setup">Setup</h2>
 
 <p>With that done, let&rsquo;s add models for the <code>Account</code> records and <code>Movie</code> records. Persistence is done somewhere else. This time, we will store records through irb.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby account.rb" data-lang="ruby account.rb"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Account</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:username</span>, <span style="color:#e6db74">:email</span>, <span style="color:#e6db74">:movies_watched</span>
 
-<pre><code class="language-ruby">class Account
-  attr_accessor :username, :email, :movies_watched
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(hash<span style="color:#f92672">=</span><span style="color:#66d9ef">nil</span>)
+    <span style="color:#66d9ef">if</span> hash
+      @username <span style="color:#f92672">=</span> hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;username&#34;</span><span style="color:#f92672">]</span>
+      @email <span style="color:#f92672">=</span> hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;email&#34;</span><span style="color:#f92672">]</span>
+      @movies_watched <span style="color:#f92672">=</span> <span style="color:#66d9ef">GSet</span><span style="color:#f92672">.</span>new(hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;movies_watched&#34;</span><span style="color:#f92672">]</span>)
+    <span style="color:#66d9ef">else</span>
+      @movies_watched <span style="color:#f92672">=</span> <span style="color:#66d9ef">GSet</span><span style="color:#f92672">.</span>new
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
 
-  def initialize(hash=nil)
-    if hash
-      @username = hash[&quot;username&quot;]
-      @email = hash[&quot;email&quot;]
-      @movies_watched = GSet.new(hash[&quot;movies_watched&quot;])
-    else
-      @movies_watched = GSet.new
-    end
-  end
-
-  def as_json
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">as_json</span>
     {
-      &quot;username&quot; =&gt; username,
-      &quot;email&quot; =&gt; email,
-      &quot;movies_watched&quot; =&gt; movies_watched.as_json
+      <span style="color:#e6db74">&#34;username&#34;</span> <span style="color:#f92672">=&gt;</span> username,
+      <span style="color:#e6db74">&#34;email&#34;</span> <span style="color:#f92672">=&gt;</span> email,
+      <span style="color:#e6db74">&#34;movies_watched&#34;</span> <span style="color:#f92672">=&gt;</span> movies_watched<span style="color:#f92672">.</span>as_json
     }
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def to_json
-    as_json.to_json
-  end
-end
-</code></pre>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">to_json</span>
+    as_json<span style="color:#f92672">.</span>to_json
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby movie.rb" data-lang="ruby movie.rb"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Movie</span>
+  <span style="color:#66d9ef">attr_accessor</span> <span style="color:#e6db74">:title</span>
 
-<pre><code class="language-ruby">class Movie
-  attr_accessor :title
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">initialize</span>(hash<span style="color:#f92672">=</span><span style="color:#66d9ef">nil</span>)
+    <span style="color:#66d9ef">if</span> hash
+      @title <span style="color:#f92672">=</span> hash<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;title&#34;</span><span style="color:#f92672">]</span>
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
 
-  def initialize(hash=nil)
-    if hash
-      @title = hash[&quot;title&quot;]
-    end
-  end
-
-  def as_json
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">as_json</span>
     {
-      &quot;title&quot; =&gt; title
+      <span style="color:#e6db74">&#34;title&#34;</span> <span style="color:#f92672">=&gt;</span> title
     }
-  end
+  <span style="color:#66d9ef">end</span>
 
-  def to_json
-    as_json.to_json
-  end
-end
-</code></pre>
-
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">to_json</span>
+    as_json<span style="color:#f92672">.</span>to_json
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>Let&rsquo;s store a few arbitrary movies, keep their keys in memory and cause a write conflict. We will then see how we can resolve this conflict through the usage of our CRDT.</p>
-
-<pre><code class="language-ruby">movie_bucket = client.bucket(&quot;movies&quot;)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">movie_bucket = client.bucket(&#34;movies&#34;)
  =&gt; #&lt;Riak::Bucket {movies}&gt;
 
 movie_record_keys = []
 
-m1 = Movie.new(&quot;title&quot; =&gt; &quot;Test Movie&quot;)
- =&gt; #&lt;Movie:0x007ffa0be21348 @title=&quot;Test Movie&quot;&gt;
+m1 = Movie.new(&#34;title&#34; =&gt; &#34;Test Movie&#34;)
+ =&gt; #&lt;Movie:0x007ffa0be21348 @title=&#34;Test Movie&#34;&gt;
 
-m2 = Movie.new(&quot;title&quot; =&gt; &quot;Another test movie&quot;)
- =&gt; #&lt;Movie:0x007ffa0be43ba0 @title=&quot;Another test movie&quot;&gt;
+m2 = Movie.new(&#34;title&#34; =&gt; &#34;Another test movie&#34;)
+ =&gt; #&lt;Movie:0x007ffa0be43ba0 @title=&#34;Another test movie&#34;&gt;
 
 r1 = movie_bucket.new
  =&gt; #&lt;Riak::RObject {movies} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
 
 r1.data = m1.as_json
- =&gt; {&quot;title&quot;=&gt;&quot;Test Movie&quot;}
+ =&gt; {&#34;title&#34;=&gt;&#34;Test Movie&#34;}
 
 r1.store
- =&gt; #&lt;Riak::RObject {movies,CAQ3ewkn0vVI5q8Kxt4LPcrFYk9} [#&lt;Riak::RContent [application/json]:{&quot;title&quot;=&gt;&quot;Test Movie&quot;}&gt;]&gt;
+ =&gt; #&lt;Riak::RObject {movies,CAQ3ewkn0vVI5q8Kxt4LPcrFYk9} [#&lt;Riak::RContent [application/json]:{&#34;title&#34;=&gt;&#34;Test Movie&#34;}&gt;]&gt;
 
 movie_record_keys &lt;&lt; r1.key
 
@@ -316,20 +293,17 @@ r2 = movie_bucket.new
  =&gt; #&lt;Riak::RObject {movies} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
 
 r2.data = m2.as_json
- =&gt; {&quot;title&quot;=&gt;&quot;Another test movie&quot;}
+ =&gt; {&#34;title&#34;=&gt;&#34;Another test movie&#34;}
 
 r2.store
- =&gt; #&lt;Riak::RObject {movies,aU6uCCZJ10xGIPJonpSYftZ4H0w} [#&lt;Riak::RContent [application/json]:{&quot;title&quot;=&gt;&quot;Another test movie&quot;}&gt;]&gt;
+ =&gt; #&lt;Riak::RObject {movies,aU6uCCZJ10xGIPJonpSYftZ4H0w} [#&lt;Riak::RContent [application/json]:{&#34;title&#34;=&gt;&#34;Another test movie&#34;}&gt;]&gt;
 
 movie_record_keys &lt;&lt; r2.key
- =&gt; [&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;, &quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]
-</code></pre>
-
+ =&gt; [&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;, &#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;]</code></pre></div>
 <p>OK, now we have two movies, so let&rsquo;s simulate a simultaneous account access by 2 holders, each of which is watching a movie. As shown in the previous post, storing values at the same time will cause a write conflict, resulting in creation of siblings. As usual, the <code>accounts</code> bucket should have <code>allow_mult</code> set to <strong>true</strong>, so that Riak doesn&rsquo;t discard one of the writes.</p>
 
 <p>Let&rsquo;s first create an account.</p>
-
-<pre><code class="language-ruby">accounts_bucket = client.bucket(&quot;accounts&quot;)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">accounts_bucket = client.bucket(&#34;accounts&#34;)
  =&gt; #&lt;Riak::Bucket {accounts}&gt;
 
 accounts_bucket.allow_mult = true
@@ -338,117 +312,100 @@ accounts_bucket.allow_mult = true
 account = Account.new
  =&gt; #&lt;Account:0x007ffa0ce89758 @movies_watched=#&lt;GSet:0x007ffa0ce89730 @a=#&lt;Set: {}&gt;&gt;&gt;
 
-account.username = &quot;an-user&quot;
- =&gt; &quot;an-user&quot;
-account.email = &quot;anuser@email.com&quot;
- =&gt; &quot;anuser@email.com&quot;
+account.username = &#34;an-user&#34;
+ =&gt; &#34;an-user&#34;
+account.email = &#34;anuser@email.com&#34;
+ =&gt; &#34;anuser@email.com&#34;
 
 record = accounts_bucket.new
  =&gt; #&lt;Riak::RObject {accounts} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
 
 record.data = account.as_json
- =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}
+ =&gt; {&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[]}}
 
 record.store
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}&gt;]&gt;
-</code></pre>
-
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[]}}&gt;]&gt;</code></pre></div>
 <p>OK, with the record stored, we retrieve it twice without updating. This ensures that the <code>vclock</code> value for the record is not updated, allowing us the opportunity to cause a write conflict.</p>
-
-<pre><code class="language-ruby">one_access = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[]}}&gt;]&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">one_access = accounts_bucket.get &#34;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&#34;
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[]}}&gt;]&gt;
 
 # same as above
-second_access = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+second_access = accounts_bucket.get &#34;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&#34;
 
 first_instance = Account.new(one_access.data)
- =&gt; #&lt;Account:0x007ffa0cf2b710 @movies_watched=#&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {}&gt;&gt;, @username=&quot;an-user&quot;, @email=&quot;anuser@email.com&quot;&gt;
+ =&gt; #&lt;Account:0x007ffa0cf2b710 @movies_watched=#&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {}&gt;&gt;, @username=&#34;an-user&#34;, @email=&#34;anuser@email.com&#34;&gt;
 
-second_instance = Account.new(second_access.data)
-</code></pre>
-
+second_instance = Account.new(second_access.data)</code></pre></div>
 <p>Let&rsquo;s now add the ID of the first created movie to one instance of this <code>Account</code> record and the ID of the second movie to the other one.</p>
-
-<pre><code class="language-ruby">first_instance.movies_watched.add(movie_record_keys.first)
- =&gt; #&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;}&gt;&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">first_instance.movies_watched.add(movie_record_keys.first)
+ =&gt; #&lt;GSet:0x007ffa0cf2b670 @a=#&lt;Set: {&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;}&gt;&gt;
 
 second_instance.movies_watched &lt;&lt; movie_record_keys.last
- =&gt; #&lt;GSet:0x007ffa0cf31f70 @a=#&lt;Set: {&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;}&gt;&gt;
-</code></pre>
-
+ =&gt; #&lt;GSet:0x007ffa0cf31f70 @a=#&lt;Set: {&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;}&gt;&gt;</code></pre></div>
 <p>Let&rsquo;s now try storing these objects back into Riak and seeing what happens.</p>
-
-<pre><code class="language-ruby">one_access.data = first_instance.as_json
- =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">one_access.data = first_instance.as_json
+ =&gt; {&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}
 
 one_access.store
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}&gt;]&gt;
 
 second_access.data = second_instance.as_json
- =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}
+ =&gt; {&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;]}}
 
 second_access.store
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}&gt;, #&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
-</code></pre>
-
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;]}}&gt;, #&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}&gt;]&gt;</code></pre></div>
 <p>And, there we go. We have successfully (again) caused a conflict. Let&rsquo;s write some code to resolve it. The trick here to resolving conflicts like this is that you must not access the <code>data</code> nor the <code>raw_data</code> methods. These will throw an exception and mess up your day.</p>
 
 <p>Let&rsquo;s instead, introduce a class method in the <code>Account</code> model that will handle conflict resolution for us.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby account.rb" data-lang="ruby account.rb"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Account</span>
+  <span style="color:#75715e"># existing methods</span>
+  <span style="color:#75715e">#</span>
+  <span style="color:#75715e">#</span>
+  <span style="color:#75715e">#</span>
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">self</span><span style="color:#f92672">.</span><span style="color:#a6e22e">from_persistence</span>(obj)
+    <span style="color:#66d9ef">if</span> obj<span style="color:#f92672">.</span>conflict?
+      resolved <span style="color:#f92672">=</span> {}
+      watched_lists <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+      obj<span style="color:#f92672">.</span>siblings<span style="color:#f92672">.</span>each <span style="color:#66d9ef">do</span> <span style="color:#f92672">|</span>sibling<span style="color:#f92672">|</span>
+        watched_lists <span style="color:#f92672">&lt;&lt;</span> sibling<span style="color:#f92672">.</span>data<span style="color:#f92672">.</span>delete(<span style="color:#e6db74">&#34;movies_watched&#34;</span>)
+        resolved<span style="color:#f92672">.</span>merge!(sibling<span style="color:#f92672">.</span>data)
+      <span style="color:#66d9ef">end</span>
 
-<pre><code class="language-ruby">class Account
-  # existing methods
-  #
-  #
-  #
-  def self.from_persistence(obj)
-    if obj.conflict?
-      resolved = {}
-      watched_lists = []
-      obj.siblings.each do |sibling|
-        watched_lists &lt;&lt; sibling.data.delete(&quot;movies_watched&quot;)
-        resolved.merge!(sibling.data)
-      end
+      first_one <span style="color:#f92672">=</span> <span style="color:#66d9ef">GSet</span><span style="color:#f92672">.</span>new(watched_lists<span style="color:#f92672">.</span>shift)
+      watched_lists<span style="color:#f92672">.</span>each {<span style="color:#f92672">|</span>list<span style="color:#f92672">|</span> first_one <span style="color:#f92672">=</span> first_one<span style="color:#f92672">.</span>merge(<span style="color:#66d9ef">GSet</span><span style="color:#f92672">.</span>new(list))}
 
-      first_one = GSet.new(watched_lists.shift)
-      watched_lists.each {|list| first_one = first_one.merge(GSet.new(list))}
-
-      resolved.merge!(&quot;movies_watched&quot; =&gt; first_one.as_json)
-      new(resolved)
-    else
-      new(obj.data)
-    end
-  end
-end
-</code></pre>
-
+      resolved<span style="color:#f92672">.</span>merge!(<span style="color:#e6db74">&#34;movies_watched&#34;</span> <span style="color:#f92672">=&gt;</span> first_one<span style="color:#f92672">.</span>as_json)
+      <span style="color:#66d9ef">new</span>(resolved)
+    <span style="color:#66d9ef">else</span>
+      <span style="color:#66d9ef">new</span>(obj<span style="color:#f92672">.</span>data)
+    <span style="color:#66d9ef">end</span>
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
 <p>In this method, we check first if the raw record coming from Riak has the <code>conflict?</code> flag set, which indicates that there&rsquo;s been a write conflict somewhere. If it is, we loop through all the <code>siblings</code> and pull out the <strong>movies_watched</strong> lists. The rest of this record should not be subject to conflict resolution, so we will accept whatever values there are for them.</p>
 
 <p>We then initialize the first item in the list of <code>GSet</code>s and then merge the others in that list with the first one. We append this to the hash of resolved values and then instantiate our <code>Account</code> model with the new values.</p>
 
 <p>The second part to this conflict resolution is storing the resolved object back into Riak. Again, as in the previous post, we do that by creating a new <code>Riak::RObject</code> instance, setting its key to the conflicted one and setting the <code>siblings</code> property of the conflicted instance to an array of <code>Riak::RObject</code>s of size 1. The only member is the new instance. We store that and we&rsquo;re done.</p>
-
-<pre><code class="language-ruby">record = accounts_bucket.get &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;]}}&gt;, #&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">record = accounts_bucket.get &#34;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&#34;
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;]}}&gt;, #&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}&gt;]&gt;
 
 a = Account.from_persistence(record)
- =&gt; #&lt;Account:0x007ff318320c68 @username=&quot;an-user&quot;, @email=&quot;anuser@email.com&quot;, @movies_watched=#&lt;GSet:0x007ff318320bc8 @a=#&lt;Set: {&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;}&gt;&gt;&gt;
+ =&gt; #&lt;Account:0x007ff318320c68 @username=&#34;an-user&#34;, @email=&#34;anuser@email.com&#34;, @movies_watched=#&lt;GSet:0x007ff318320bc8 @a=#&lt;Set: {&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;, &#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;}&gt;&gt;&gt;
 
 resolved = accounts_bucket.new
  =&gt; #&lt;Riak::RObject {accounts} [#&lt;Riak::RContent [application/json]:nil&gt;]&gt;
 
 resolved.data = a.as_json
- =&gt; {&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}
+ =&gt; {&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;, &#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}
 
 resolved.key = record.key
- =&gt; &quot;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&quot;
+ =&gt; &#34;6z4xJjAFMJVHWn6Ni2MF5J3IBBq&#34;
 
 record.siblings = [resolved]
- =&gt; [#&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;]
+ =&gt; [#&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;, &#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}&gt;]&gt;]
 
 record.store
- =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&quot;username&quot;=&gt;&quot;an-user&quot;, &quot;email&quot;=&gt;&quot;anuser@email.com&quot;, &quot;movies_watched&quot;=&gt;{&quot;type&quot;=&gt;&quot;g-set&quot;, &quot;a&quot;=&gt;[&quot;aU6uCCZJ10xGIPJonpSYftZ4H0w&quot;, &quot;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&quot;]}}&gt;]&gt;
-</code></pre>
-
+ =&gt; #&lt;Riak::RObject {accounts,6z4xJjAFMJVHWn6Ni2MF5J3IBBq} [#&lt;Riak::RContent [application/json]:{&#34;username&#34;=&gt;&#34;an-user&#34;, &#34;email&#34;=&gt;&#34;anuser@email.com&#34;, &#34;movies_watched&#34;=&gt;{&#34;type&#34;=&gt;&#34;g-set&#34;, &#34;a&#34;=&gt;[&#34;aU6uCCZJ10xGIPJonpSYftZ4H0w&#34;, &#34;CAQ3ewkn0vVI5q8Kxt4LPcrFYk9&#34;]}}&gt;]&gt;</code></pre></div>
 <h2 id="conclusion">Conclusion</h2>
 
 <p>Hopefully, this has shed a bit more light on how CRDTs can be used in real applications. The big key here is that during data model design, a need for conflict resolution must be anticipated and then the data, or parts of it, must be structured as a CRDT. Once that is done, merging conflicted records is pretty easy and availability is preserved.</p>

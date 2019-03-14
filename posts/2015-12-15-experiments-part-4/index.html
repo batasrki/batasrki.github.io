@@ -128,51 +128,47 @@ Onward, then&hellip; Up to now, this has been a read-only app."/>
 <p>Up to now, this has been a read-only app. It&rsquo;s time to add the creation part. I&rsquo;m going to not worry about persistently storing yet. Instead, I&rsquo;ll add the newly created link to the <code>atom</code> I created in the last post.</p>
 
 <p>Firstly, I&rsquo;m going to add a form component.</p>
-
-<pre><code class="language-javascript">var LinkForm = React.createClass({
-  render: function() {
-    return (
-      &lt;div className={&quot;col-lg-6&quot;, &quot;well&quot;}&gt;
-        &lt;form className=&quot;form-horizontal&quot; onSubmit={this.handleSubmit}&gt;
-          &lt;fieldset&gt;
-            &lt;legend&gt;Save a link&lt;/legend&gt;
-            &lt;div className=&quot;form-group&quot;&gt;
-              &lt;label className={&quot;col-lg-2 control-label&quot;}&gt;URL&lt;/label&gt;
-              &lt;div className=&quot;col-lg-10&quot;&gt;
-                &lt;input name=&quot;url&quot; placeholder=&quot;URL&quot; type=&quot;url&quot; className=&quot;form-control&quot; ref=&quot;url&quot; /&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-            &lt;div className=&quot;form-group&quot;&gt;
-              &lt;label className={&quot;col-lg-2 control-label&quot;}&gt;From&lt;/label&gt;
-              &lt;div className=&quot;col-lg-10&quot;&gt;
-                &lt;input name=&quot;client&quot; placeholder=&quot;From&quot; type=&quot;text&quot; className=&quot;form-control&quot; ref=&quot;client&quot; /&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-            &lt;div className=&quot;form-group&quot;&gt;
-              &lt;div className={&quot;col-lg-10 col-lg-offset-2&quot;}&gt;
-                &lt;button className={&quot;btn btn-primary&quot;} type=&quot;submit&quot;&gt;Save&lt;/button&gt;
-              &lt;/div&gt;
-            &lt;/div&gt;
-          &lt;/fieldset&gt;
-        &lt;/form&gt;
-      &lt;/div&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkForm</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+    <span style="color:#66d9ef">return</span> (
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;col-lg-6&#34;</span>, <span style="color:#e6db74">&#34;well&#34;</span>}<span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">form</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-horizontal&#34;</span> <span style="color:#a6e22e">onSubmit</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">handleSubmit</span>}<span style="color:#f92672">&gt;</span>
+          <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">fieldset</span><span style="color:#f92672">&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">legend</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">Save</span> <span style="color:#a6e22e">a</span> <span style="color:#a6e22e">link</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/legend&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-group&#34;</span><span style="color:#f92672">&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">label</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;col-lg-2 control-label&#34;</span>}<span style="color:#f92672">&gt;</span><span style="color:#a6e22e">URL</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/label&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;col-lg-10&#34;</span><span style="color:#f92672">&gt;</span>
+                <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">input</span> <span style="color:#a6e22e">name</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;url&#34;</span> <span style="color:#a6e22e">placeholder</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;URL&#34;</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;url&#34;</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-control&#34;</span> <span style="color:#a6e22e">ref</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;url&#34;</span> <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-group&#34;</span><span style="color:#f92672">&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">label</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;col-lg-2 control-label&#34;</span>}<span style="color:#f92672">&gt;</span><span style="color:#a6e22e">From</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/label&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;col-lg-10&#34;</span><span style="color:#f92672">&gt;</span>
+                <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">input</span> <span style="color:#a6e22e">name</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;client&#34;</span> <span style="color:#a6e22e">placeholder</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;From&#34;</span> <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;text&#34;</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-control&#34;</span> <span style="color:#a6e22e">ref</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;client&#34;</span> <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;form-group&#34;</span><span style="color:#f92672">&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">div</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;col-lg-10 col-lg-offset-2&#34;</span>}<span style="color:#f92672">&gt;</span>
+                <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">button</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;btn btn-primary&#34;</span>} <span style="color:#a6e22e">type</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;submit&#34;</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">Save</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/button&gt;</span>
+              <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
+          <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/fieldset&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/form&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/div&gt;</span>
     );
   }
 });
-</code></pre>
-
+</code></pre></div>
 <p>For now, I&rsquo;ll stick it under the list component, but later I may break it into a modal.</p>
-
-<pre><code class="language-javascript">render: function() {
-  return (
-    &lt;section className=&quot;linkListContainer&quot;&gt;
-      &lt;LinkList data = {this.state.data} /&gt;
-      &lt;LinkForm onLinkSubmit={this.handleLinkSubmit} /&gt;
-    &lt;/section&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+  <span style="color:#66d9ef">return</span> (
+    <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">section</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;linkListContainer&#34;</span><span style="color:#f92672">&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkList</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">state</span>.<span style="color:#a6e22e">data</span>} <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkForm</span> <span style="color:#a6e22e">onLinkSubmit</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">handleLinkSubmit</span>} <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+    <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/section&gt;</span>
   );
 }
-</code></pre>
-
+</code></pre></div>
 <p>So far, so straightforward. I&rsquo;ve added a form, laid out in typical Bootstrap style, then added it as a component to the parent component.</p>
 
 <h3 id="submits">Submits</h3>
@@ -180,101 +176,79 @@ Onward, then&hellip; Up to now, this has been a read-only app."/>
 <p>A sharp-eyed reader will notice two seemingly missing pieces, <code>onLinkSubmit={this.handleLinkSubmit}</code> in the declaration of the form component and <code>onSubmit={this.handleSubmit}</code> in the action of the <code>&lt;form&gt;</code> element.</p>
 
 <p>These two functions are the drivers of the form&rsquo;s behaviour. I&rsquo;m going to show and explain the latter one first.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkForm</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">handleSubmit</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+    <span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">preventDefault</span>();
+    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">url</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">refs</span>.<span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">value</span>.<span style="color:#a6e22e">trim</span>();
+    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">client</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">refs</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">value</span>.<span style="color:#a6e22e">trim</span>();
 
-<pre><code class="language-javascript">var LinkForm = React.createClass({
-  handleSubmit: function(e) {
-    e.preventDefault();
-    var url = this.refs.url.value.trim();
-    var client = this.refs.client.value.trim();
-
-    if (!url || !client) {
-      return;
+    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span><span style="color:#a6e22e">url</span> <span style="color:#f92672">||</span> <span style="color:#f92672">!</span><span style="color:#a6e22e">client</span>) {
+      <span style="color:#66d9ef">return</span>;
     }
 
-    this.props.onLinkSubmit({url: url, client: client});
-    this.refs.url.value = '';
-    this.refs.client.value = '';
-    return;
+    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">onLinkSubmit</span>({<span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">url</span>, <span style="color:#a6e22e">client</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">client</span>});
+    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">refs</span>.<span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">value</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">refs</span>.<span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">value</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+    <span style="color:#66d9ef">return</span>;
   },
-  // render function below
-</code></pre>
-
+  <span style="color:#75715e">// render function below
+</span></code></pre></div>
 <p>All the form&rsquo;s submit function does is parse out the values from the two input fields, does a quick presence validation, <strong><em>passes on the values to the parent component</em></strong>, and clears the fields.</p>
 
 <p>I&rsquo;ve highlighted the cool and important part. The function itself doesn&rsquo;t actually do any XHR calls. Its responsibility is to get the values and pass them up the hierachy. As far as I can tell, this helps with centralizing state changes. The parent component will deal with the actual data changes and it will then tell every descendant to re-render themselves.</p>
 
 <p>Here&rsquo;s the function that does the actual server call.</p>
-
-<pre><code class="language-javascript">// componentDidMount above
-handleLinkSubmit: function(link) {
-  $.ajax({
-    url: this.props.url,
-    dataType: &quot;json&quot;,
-    contentType: &quot;application/json&quot;,
-    type: &quot;POST&quot;,
-    data: JSON.stringify(link),
-    success: function(data) {
-      this.setState({data: data});
-    }.bind(this),
-    error: function(xhr, status, err) {
-      console.error(this.props.url, status, err.toString());
-    }.bind(this)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#75715e">// componentDidMount above
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">handleLinkSubmit</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">link</span>) {
+  <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">ajax</span>({
+    <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>,
+    <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;json&#34;</span>,
+    <span style="color:#a6e22e">contentType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;application/json&#34;</span>,
+    <span style="color:#a6e22e">type</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;POST&#34;</span>,
+    <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">stringify</span>(<span style="color:#a6e22e">link</span>),
+    <span style="color:#a6e22e">success</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+      <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">setState</span>({<span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span>});
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>),
+    <span style="color:#a6e22e">error</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">xhr</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>) {
+      <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">toString</span>());
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>)
   });
 },
-// render below
-</code></pre>
-
+<span style="color:#75715e">// render below
+</span></code></pre></div>
 <p>It&rsquo;s pretty straightforward. The object named <code>link</code> is passed from the form component&rsquo;s <code>handleSubmit</code> function, which is then stringified and sent to the server. On a successful response, the <code>LinkListContainer</code> component receives a full set of data, which is what the internal state is set to. This will in turn cause child components to re-render themselves.</p>
 
 <h3 id="fake-it-until-you-need-it">Fake it until you&hellip;need it</h3>
 
 <p>I&rsquo;m now going to implement the <code>POST</code> route on the server-side, where I&rsquo;ll attach the new link to the existing data set and send that down.</p>
-
-<pre><code class="language-clojure">;; data set refresher
-(def links
-  (atom '({:id 1 :url &quot;https://google.ca&quot; :title &quot;Google&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
-          {:id 2 :url &quot;https://twitter.com&quot; :title &quot;Twitter&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
-          {:id 3 :url &quot;https://github.com&quot; :title &quot;Github&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
-          {:id 4 :url &quot;https://www.shopify.ca&quot; :title &quot;Shopify&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
-          {:id 5 :url &quot;https://www.youtube.com&quot; :title &quot;YouTube&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;})
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; data set refresher</span>
+(<span style="color:#66d9ef">def </span>links
+  (atom <span style="color:#f92672">&#39;</span>({<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">1</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://google.ca&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Google&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-01&#34;</span>}
+          {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">2</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://twitter.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Twitter&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-01&#34;</span>}
+          {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">3</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://github.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Github&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>}
+          {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">4</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://www.shopify.ca&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Shopify&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>}
+          {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">5</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://www.youtube.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;YouTube&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>})
   )
 )
-;; in app-routes
-(POST &quot;/api/links&quot; request
-  (let [next-id (inc (apply max (map #(:id %) @links)))
-        new-link (:body request)
-        new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-15&quot;)]
+<span style="color:#75715e">;; in app-routes</span>
+(POST <span style="color:#e6db74">&#34;/api/links&#34;</span> request
+  (<span style="color:#66d9ef">let </span>[next-id (inc (apply max (map <span style="color:#f92672">#</span>(<span style="color:#e6db74">:id</span> %) <span style="color:#f92672">@</span>links)))
+        new-link (<span style="color:#e6db74">:body</span> request)
+        new-link-with-fields (assoc new-link <span style="color:#e6db74">:id</span> next-id <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:url</span> new-link) <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-15&#34;</span>)]
     (swap! links conj new-link-with-fields)
-    (json/write-str @links)))
-</code></pre>
-
+    (json/write-str <span style="color:#f92672">@</span>links)))</code></pre></div>
 <p>I love how this works. I really, really do. I&rsquo;m going to explain each line starting from <code>let</code>.</p>
-
-<pre><code class="language-clojure">next-id (inc (apply max (map $(:id %) @links)))
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">next-id (inc (apply max (map $(<span style="color:#e6db74">:id</span> %) <span style="color:#f92672">@</span>links)))</code></pre></div>
 <p>ReactJS would like a key to hang its rendering on. I am using the <code>ID</code> of each record. This line implements a simplistic ID auto-increment. It lifts the ID values out of each record in the <code>links</code> atom. It then applies <code>max</code> to the new list to find the highest value. Finally, it increments that value by one.</p>
-
-<pre><code class="language-clojure">new-link (:body request)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">new-link (<span style="color:#e6db74">:body</span> request)</code></pre></div>
 <p>Maps are the predominant data structure in Clojure web development. At least, they are from what I&rsquo;ve seen in my limited exposure. Here, I take the body of the request which represents the JSON data I passed in from the client.</p>
-
-<pre><code class="language-clojure">new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-15&quot;)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">new-link-with-fields (assoc new-link <span style="color:#e6db74">:id</span> next-id <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:url</span> new-link) <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-15&#34;</span>)</code></pre></div>
 <p>I need to add a few more things to the new record, namely <code>title</code>, <code>id</code>, and <code>created_at</code>. The last one will be hard-coded, the title can be equal to the URL and ID will be the <code>next-id</code> I computed above.</p>
 
 <p>Also, isn&rsquo;t it neat how I can create a new value within a <code>let</code> and then use it to create another one within the same <code>let</code>?!? I think it is.</p>
-
-<pre><code class="language-clojure">(swap! links conj new-link-with-fields)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(swap! links conj new-link-with-fields)</code></pre></div>
 <p>Once I have a new, valid record, I need to add it to my dataset. Since I&rsquo;m using the <code>atom</code> construct, I need to use <code>swap!</code> to update its value. Atoms are neat, too. So many neat things.</p>
-
-<pre><code class="language-clojure">(json/write-str @links)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(json/write-str <span style="color:#f92672">@</span>links)</code></pre></div>
 <p>Finally, with all of the transformation done, I create a JSON response that is sent back to the client. When I run the whole app, it works exactly as if there was a database backing it. Woot.</p>
 <ul class="pa0">
   

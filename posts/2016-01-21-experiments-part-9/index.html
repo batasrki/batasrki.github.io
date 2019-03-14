@@ -124,36 +124,31 @@ Time for an experiment var component = ReactDOM."/>
 <p>Tonight, I&rsquo;m going to hook that up to ReactJS. I am questioning how to do that, though. I know that I want to get, and then set the state of the root component. I wonder what <code>ReactDOM.render</code> returns. Does it return the actual component?</p>
 
 <h2 id="time-for-an-experiment">Time for an experiment</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">component</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">ReactDOM</span>.<span style="color:#a6e22e">render</span>(<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkListContainer</span> <span style="color:#a6e22e">url</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/api/links&#34;</span> <span style="color:#960050;background-color:#1e0010">/&gt;, document.getElementById(&#34;content&#34;));</span>
 
-<pre><code class="language-javascript">var component = ReactDOM.render(&lt;LinkListContainer url=&quot;/api/links&quot; /&gt;, document.getElementById(&quot;content&quot;));
-
-console.log(component);
-</code></pre>
-
+<span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">log</span>(<span style="color:#a6e22e">component</span>);
+</code></pre></div>
 <p>Very simply, I am assigning the return value of <code>ReactDOM.render</code> to a variable and outputting that to the console. Thank $DEITY for browser consoles. Reloading the page and inspecting the <code>Object</code> returned shows me that it <strong>is</strong> the root component. Great, I love when software behaves how I think it should.</p>
 
 <p>This makes things quite simple. I will pass the component into the <code>EventSource</code> callback function and do things.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">evtSource</span>.<span style="color:#a6e22e">addEventListener</span>(<span style="color:#e6db74">&#34;link-update&#34;</span>, <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">e</span>) {
+  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">currentData</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">component</span>.<span style="color:#a6e22e">state</span>.<span style="color:#a6e22e">data</span>;
+  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">replacement</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">JSON</span>.<span style="color:#a6e22e">parse</span>(<span style="color:#a6e22e">e</span>.<span style="color:#a6e22e">data</span>);
 
-<pre><code class="language-javascript">evtSource.addEventListener(&quot;link-update&quot;, function(e) {
-  var currentData = component.state.data;
-  var replacement = JSON.parse(e.data);
-
-  var toReplace = currentData.filter(function(obj) {
-    if(obj.id === replacement.id) {
-      return obj;
+  <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">toReplace</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">currentData</span>.<span style="color:#a6e22e">filter</span>(<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">obj</span>) {
+    <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">obj</span>.<span style="color:#a6e22e">id</span> <span style="color:#f92672">===</span> <span style="color:#a6e22e">replacement</span>.<span style="color:#a6e22e">id</span>) {
+      <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">obj</span>;
     }
-  })[0];
+  })[<span style="color:#ae81ff">0</span>];
 
 
-  if(toReplace !== undefined) {
-    var idx = currentData.indexOf(toReplace);
-    currentData.splice(idx, 1, replacement);
-    component.setState({data: currentData});
+  <span style="color:#66d9ef">if</span>(<span style="color:#a6e22e">toReplace</span> <span style="color:#f92672">!==</span> <span style="color:#66d9ef">undefined</span>) {
+    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">idx</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">currentData</span>.<span style="color:#a6e22e">indexOf</span>(<span style="color:#a6e22e">toReplace</span>);
+    <span style="color:#a6e22e">currentData</span>.<span style="color:#a6e22e">splice</span>(<span style="color:#a6e22e">idx</span>, <span style="color:#ae81ff">1</span>, <span style="color:#a6e22e">replacement</span>);
+    <span style="color:#a6e22e">component</span>.<span style="color:#a6e22e">setState</span>({<span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">currentData</span>});
   }
 });
-
-</code></pre>
-
+</code></pre></div>
 <p>The <code>component</code> gives me access to the <code>data</code> attribute holding the collection of links. The <code>link-update</code> event will send me a whole link record. Having those two things enables me to:</p>
 
 <ul>

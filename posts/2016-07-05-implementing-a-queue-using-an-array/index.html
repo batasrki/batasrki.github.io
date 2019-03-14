@@ -123,45 +123,39 @@ Essentially, what I will do is implement a circular buffer. As items are popped 
 <p>As I said in the <a href="http://batasrki.github.io/blog/2016/06/23/stacks-and-queues/">original post</a>, Clojure has a <code>list</code> data structure that is optimized for pushing items to the front of it and a <code>vector</code> data structure whose optimization is for pushing to the back of it. The latter one sounds perfect for a queue implementation.</p>
 
 <p>As per usual, I&rsquo;m going to store the state in an <code>atom</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#66d9ef">def </span>my-queue (atom []))
 
-<pre><code class="language-clojure">(def my-queue (atom []))
-
-(defn enqueue [item queue]
+(<span style="color:#66d9ef">defn </span>enqueue [item queue]
   (swap! queue conj item))
 
-(defn dequeue [queue]
-  (let [item (first @queue)]
-    (reset! queue (rest @queue))
+(<span style="color:#66d9ef">defn </span>dequeue [queue]
+  (<span style="color:#66d9ef">let </span>[item (first <span style="color:#f92672">@</span>queue)]
+    (reset! queue (rest <span style="color:#f92672">@</span>queue))
     item))
 
-(defn empty*? [queue]
-  (= [] @queue))
-</code></pre>
-
+(<span style="color:#66d9ef">defn </span>empty*? [queue]
+  (= [] <span style="color:#f92672">@</span>queue))</code></pre></div>
 <p>Here&rsquo;s the usage of it.</p>
-
-<pre><code class="language-clojure">user&gt; (use 'tester.array-queue :reload)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">user&gt; (use <span style="color:#e6db74">&#39;tester.array-queue</span> <span style="color:#e6db74">:reload</span>)
 nil
 user&gt; my-queue
-#atom[[] 0x1b9ca292]
-user&gt; (enqueue 2 my-queue)
-[2]
-user&gt; (enqueue 21 my-queue)
-[2 21]
-user&gt; (enqueue 1 my-queue)
-[2 21 1]
+<span style="color:#f92672">#</span>atom[[] <span style="color:#ae81ff">0</span>x1b9ca292]
+user&gt; (enqueue <span style="color:#ae81ff">2</span> my-queue)
+[<span style="color:#ae81ff">2</span>]
+user&gt; (enqueue <span style="color:#ae81ff">21</span> my-queue)
+[<span style="color:#ae81ff">2</span> <span style="color:#ae81ff">21</span>]
+user&gt; (enqueue <span style="color:#ae81ff">1</span> my-queue)
+[<span style="color:#ae81ff">2</span> <span style="color:#ae81ff">21</span> <span style="color:#ae81ff">1</span>]
 user&gt; (empty*? my-queue)
 false
 user&gt; (dequeue my-queue)
-2
+<span style="color:#ae81ff">2</span>
 user&gt; (dequeue my-queue)
-21
+<span style="color:#ae81ff">21</span>
 user&gt; (dequeue my-queue)
-1
+<span style="color:#ae81ff">1</span>
 user&gt; (empty*? my-queue)
-true
-</code></pre>
-
+true</code></pre></div>
 <p>The implementation is straightforward, eased by the tools built into Clojure. <code>conj</code> pushes to the back of a <code>vector</code>. Using an <code>atom</code> and its interface (<code>swap!</code> and <code>reset!</code>) allows me to easily pop the item off the queue and return it. Making new things in Clojure using the existing things is as simple and enjoyable as advertised.</p>
 
 <h2 id="queue-in-go-using-a-fixed-size-array">Queue in Go using a fixed-size array</h2>
@@ -175,53 +169,46 @@ true
 <p>Go seems to me to be a verbose language, not due to being overly ceremonious like Java, but because it seems as if it&rsquo;s a DIY language. It gives you some basic stuff, but the rest is up to you. Some like that. I don&rsquo;t know if I do.</p>
 
 <p>Since I have nearly 0 experience in it, my implementation is likely to be circumlocutory (LOL, thesaurus). I&rsquo;m going to split it into two sections: <code>enqueue</code> and <code>dequeue</code>. These are implemented as methods on a <code>struct</code>, so that I can encapsulate the computation of the <code>readIdx</code> and <code>writeIdx</code>. It&rsquo;s kind of OOP in its approach.</p>
-
-<pre><code class="language-go">type ArrayQueue struct {
-  readIdx  int
-  writeIdx int
-  buffer   [4]int
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">ArrayQueue</span> <span style="color:#66d9ef">struct</span> {
+  <span style="color:#a6e22e">readIdx</span>  <span style="color:#66d9ef">int</span>
+  <span style="color:#a6e22e">writeIdx</span> <span style="color:#66d9ef">int</span>
+  <span style="color:#a6e22e">buffer</span>   [<span style="color:#ae81ff">4</span>]<span style="color:#66d9ef">int</span>
 }
 
-func (aq *ArrayQueue) enqueue(item int) error {
-  newWriteIdx := -1
-  aq.buffer[aq.writeIdx] = item
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">aq</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">ArrayQueue</span>) <span style="color:#a6e22e">enqueue</span>(<span style="color:#a6e22e">item</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">error</span> {
+  <span style="color:#a6e22e">newWriteIdx</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
+  <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">buffer</span>[<span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">writeIdx</span>] = <span style="color:#a6e22e">item</span>
 
-  if aq.writeIdx == len(aq.buffer)-1 {
-    newWriteIdx = 0
-  } else {
-    newWriteIdx = aq.writeIdx + 1
+  <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">writeIdx</span> <span style="color:#f92672">==</span> len(<span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">buffer</span>)<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> {
+    <span style="color:#a6e22e">newWriteIdx</span> = <span style="color:#ae81ff">0</span>
+  } <span style="color:#66d9ef">else</span> {
+    <span style="color:#a6e22e">newWriteIdx</span> = <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">writeIdx</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
   }
 
-  aq.writeIdx = newWriteIdx
+  <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">writeIdx</span> = <span style="color:#a6e22e">newWriteIdx</span>
 
-  if newWriteIdx == aq.readIdx {
-    return errors.New(&quot;Queue is full&quot;)
+  <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">newWriteIdx</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> {
+    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">errors</span>.<span style="color:#a6e22e">New</span>(<span style="color:#e6db74">&#34;Queue is full&#34;</span>)
   }
 
-  return nil
-}
-
-</code></pre>
-
+  <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}</code></pre></div>
 <p>The interesting part here is keeping track of the <code>writeIdx</code> value. Since I&rsquo;m using a fixed size array, I need to detect when I&rsquo;ve moved the <code>writeIdx</code> past the end of the array and reset it to the head. I also need to detect when I&rsquo;ve ran out of space in the array, so that I don&rsquo;t overwrite items in the queue. Here&rsquo;s how that would look.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+  <span style="color:#a6e22e">queueables</span> <span style="color:#f92672">:=</span> [<span style="color:#ae81ff">5</span>]<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">21</span>, <span style="color:#ae81ff">11</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">40</span>}
+  <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">interface</span>{}(<span style="color:#66d9ef">nil</span>)
 
-<pre><code class="language-go">func main() {
-  queueables := [5]int{21, 11, 1, 3, 40}
-  err := interface{}(nil)
+  <span style="color:#a6e22e">queue</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">ArrayQueue</span>{<span style="color:#a6e22e">readIdx</span>: <span style="color:#ae81ff">0</span>, <span style="color:#a6e22e">writeIdx</span>: <span style="color:#ae81ff">0</span>}
 
-  queue := ArrayQueue{readIdx: 0, writeIdx: 0}
+  <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; len(<span style="color:#a6e22e">queueables</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+    <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">queue</span>.<span style="color:#a6e22e">enqueue</span>(<span style="color:#a6e22e">queueables</span>[<span style="color:#a6e22e">i</span>])
 
-  for i := 0; i &lt; len(queueables); i++ {
-    err = queue.enqueue(queueables[i])
-
-    if err != nil {
-      break
+    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+      <span style="color:#66d9ef">break</span>
     }
   }
-  fmt.Println(queue.readIdx, queue.writeIdx, queue.buffer, err)
-}
-</code></pre>
-
+  <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">queue</span>.<span style="color:#a6e22e">readIdx</span>, <span style="color:#a6e22e">queue</span>.<span style="color:#a6e22e">writeIdx</span>, <span style="color:#a6e22e">queue</span>.<span style="color:#a6e22e">buffer</span>, <span style="color:#a6e22e">err</span>)
+}</code></pre></div>
 <p>The <code>queueables</code> slice is there just so that I can easily add items to the queue. One o the idioms in Go is to return an error type from a call. I am using that to print out the error when I&rsquo;ve run out of space in my queue.</p>
 
 <p>The <code>fmt.Println</code> outputs things nicely, <code>0 3 [21 11 1 3] Queue is full</code>. Number 40 is not added to the queue, since there is no space left.</p>
@@ -229,35 +216,28 @@ func (aq *ArrayQueue) enqueue(item int) error {
 <h3 id="on-to-dequeue">on to dequeue</h3>
 
 <p>The above test will only ever enqueue and it&rsquo;ll run out of space quickly. For a queue to be useful, it needs to have items removed, as well. Removing items from a queue needs to update the <code>readIdx</code> pointer value. Having this value be equal to <code>writeIdx</code> would mean that the queue is empty.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">aq</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">ArrayQueue</span>) <span style="color:#a6e22e">dequeue</span>() <span style="color:#66d9ef">int</span> {
+  <span style="color:#a6e22e">item</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">buffer</span>[<span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span>]
 
-<pre><code class="language-go">func (aq *ArrayQueue) dequeue() int {
-  item := aq.buffer[aq.readIdx]
-
-  if aq.readIdx == len(aq.buffer)-1 {
-    aq.readIdx = 0
-  } else {
-    aq.readIdx = aq.readIdx + 1
+  <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> <span style="color:#f92672">==</span> len(<span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">buffer</span>)<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> {
+    <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> = <span style="color:#ae81ff">0</span>
+  } <span style="color:#66d9ef">else</span> {
+    <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> = <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
   }
-  return item
-}
-</code></pre>
-
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">item</span>
+}</code></pre></div>
 <p>The item is fetched using the existing <code>readIdx</code> value, then calculations are made to ensure that the <code>readIdx</code> also wraps around the end of the array (slice, whatever). This makes implementing <code>peek()</code> and <code>empty()</code> easy.</p>
-
-<pre><code class="language-go">func (aq *ArrayQueue) peek() int {
-  if aq.empty() {
-    return -1
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">aq</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">ArrayQueue</span>) <span style="color:#a6e22e">peek</span>() <span style="color:#66d9ef">int</span> {
+  <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">empty</span>() {
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
   }
 
-  return aq.buffer[aq.readIdx]
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">buffer</span>[<span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span>]
 }
 
-func (aq *ArrayQueue) empty() bool {
-  return aq.readIdx == aq.writeIdx
-}
-
-</code></pre>
-
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">aq</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">ArrayQueue</span>) <span style="color:#a6e22e">empty</span>() <span style="color:#66d9ef">bool</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">readIdx</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">aq</span>.<span style="color:#a6e22e">writeIdx</span>
+}</code></pre></div>
 <p>The full test output then looks like this:</p>
 
 <pre><code>$ go build stack_array.go &amp;&amp; ./stack_array

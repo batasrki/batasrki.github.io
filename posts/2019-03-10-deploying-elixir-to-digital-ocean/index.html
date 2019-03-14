@@ -43,7 +43,7 @@ Releases and architectures To be fair, there are probably easier ways to get an 
 
 <meta itemprop="datePublished" content="2019-03-09T22:40:52-05:00" />
 <meta itemprop="dateModified" content="2019-03-09T22:40:52-05:00" />
-<meta itemprop="wordCount" content="796">
+<meta itemprop="wordCount" content="787">
 
 
 
@@ -146,69 +146,61 @@ Releases and architectures To be fair, there are probably easier ways to get an 
 <p>In the end, I&rsquo;m happy that I can build a release on my OSX laptop and ship it to my Ubuntu DO droplet without having to install Erlang, Elixir, Hex on the production system.</p>
 
 <p>Here are the <code>Dockerfile</code> and the build script. They&rsquo;re mostly straight from the Distillery&rsquo;s guides, but adjusted to also build static assets for Phoenix.</p>
-
-<pre><code class="language-Dockerfile">FROM ubuntu:16.04
-
-ENV REFRESHED_AT=2019-03-10 \
-    LANG=en_US.UTF-8 \
-    HOME=/opt/build \
-    TERM=xterm
-
-WORKDIR /opt/build
-
-RUN \
-  apt-get update -y &amp;&amp; \
-  apt-get install -y git wget vim locales &amp;&amp; \
-  locale-gen en_US.UTF-8 &amp;&amp; \
-  wget https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb &amp;&amp; \
-  dpkg -i erlang-solutions_1.0_all.deb &amp;&amp; \
-  rm erlang-solutions_1.0_all.deb &amp;&amp; \
-  apt-get update -y &amp;&amp; \
-  apt-get install -y erlang elixir curl &amp;&amp; \
-  curl -sL https://deb.nodesource.com/setup_11.x | bash - &amp;&amp; \
-  apt-get install -y nodejs
-
-CMD [&quot;/bin/bash&quot;]
-
-</code></pre>
-
-<pre><code class="language-Build">#!/usr/bin/env bash
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Dockerfile" data-lang="Dockerfile"><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> ubuntu:16.04</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENV</span><span style="color:#e6db74"> REFRESHED_AT=2019-03-10 \</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span>    LANG<span style="color:#f92672">=</span>en_US.UTF-8 <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    HOME<span style="color:#f92672">=</span>/opt/build <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    TERM<span style="color:#f92672">=</span>xterm<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /opt/build</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  apt-get update -y <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  apt-get install -y git wget vim locales <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  locale-gen en_US.UTF-8 <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  wget https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  dpkg -i erlang-solutions_1.0_all.deb <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  rm erlang-solutions_1.0_all.deb <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  apt-get update -y <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  apt-get install -y erlang elixir curl <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  curl -sL https://deb.nodesource.com/setup_11.x | bash - <span style="color:#f92672">&amp;&amp;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>  apt-get install -y nodejs<span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010">
+</span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">CMD</span><span style="color:#e6db74"> [&#34;/bin/bash&#34;]</span></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e">#!/usr/bin/env bash
+</span><span style="color:#75715e"></span>
 set -e
 
 cd /opt/build
 
-APP_NAME=&quot;$(grep 'app:' mix.exs | sed -e 's/\[//g' -e 's/ //g' -e 's/app://' -e 's/[:,]//g')&quot;
-APP_VSN=&quot;$(grep 'version:' mix.exs | cut -d '&quot;' -f2)&quot;
+APP_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>grep <span style="color:#e6db74">&#39;app:&#39;</span> mix.exs | sed -e <span style="color:#e6db74">&#39;s/\[//g&#39;</span> -e <span style="color:#e6db74">&#39;s/ //g&#39;</span> -e <span style="color:#e6db74">&#39;s/app://&#39;</span> -e <span style="color:#e6db74">&#39;s/[:,]//g&#39;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+APP_VSN<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">$(</span>grep <span style="color:#e6db74">&#39;version:&#39;</span> mix.exs | cut -d <span style="color:#e6db74">&#39;&#34;&#39;</span> -f2<span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
 
 mkdir -p /opt/build/rel/artifacts
 
-# Install updated versions of hex/rebar
+<span style="color:#75715e"># Install updated versions of hex/rebar</span>
 mix local.rebar --force
 mix local.hex --if-missing --force
 
-export MIX_ENV=prod
+export MIX_ENV<span style="color:#f92672">=</span>prod
 
-# Fetch deps and compile
+<span style="color:#75715e"># Fetch deps and compile</span>
 mix deps.get --only prod
-# Run an explicit clean to remove any build artifacts from the host
-mix do clean, compile --force
+<span style="color:#75715e"># Run an explicit clean to remove any build artifacts from the host</span>
+mix <span style="color:#66d9ef">do</span> clean, compile --force
 
-# Build the digest
+<span style="color:#75715e"># Build the digest</span>
 cd assets
 node node_modules/brunch/bin/brunch build --production
 cd ..
 mix phx.digest
 
-# Build the release
-mix release --env=prod
-# Copy tarball to output
-cp &quot;_build/prod/rel/$APP_NAME/releases/$APP_VSN/$APP_NAME.tar.gz&quot; rel/artifacts/&quot;$APP_NAME-$APP_VSN.tar.gz&quot;
+<span style="color:#75715e"># Build the release</span>
+mix release --env<span style="color:#f92672">=</span>prod
+<span style="color:#75715e"># Copy tarball to output</span>
+cp <span style="color:#e6db74">&#34;_build/prod/rel/</span>$APP_NAME<span style="color:#e6db74">/releases/</span>$APP_VSN<span style="color:#e6db74">/</span>$APP_NAME<span style="color:#e6db74">.tar.gz&#34;</span> rel/artifacts/<span style="color:#e6db74">&#34;</span>$APP_NAME<span style="color:#e6db74">-</span>$APP_VSN<span style="color:#e6db74">.tar.gz&#34;</span>
 
-exit 0
-
-</code></pre>
-<ul class="pa0">
+exit <span style="color:#ae81ff">0</span></code></pre></div><ul class="pa0">
   
 </ul>
 <div class="mt6">

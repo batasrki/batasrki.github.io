@@ -3,6 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://batasrki.github.io/posts/2019-03-12-periodic-tasks-in-elixir/</loc>
+    <lastmod>2019-03-13T20:07:38-04:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://batasrki.github.io/posts/2019-03-10-deploying-elixir-to-digital-ocean/</loc>
     <lastmod>2019-03-09T22:40:52-05:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -165,7 +172,7 @@
   
   <url>
     <loc>https://batasrki.github.io/</loc>
-    <lastmod>2019-03-09T22:40:52-05:00</lastmod>
+    <lastmod>2019-03-13T20:07:38-04:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -233,7 +240,7 @@
   
   <url>
     <loc>https://batasrki.github.io/posts/</loc>
-    <lastmod>2019-03-09T22:40:52-05:00</lastmod>
+    <lastmod>2019-03-13T20:07:38-04:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>

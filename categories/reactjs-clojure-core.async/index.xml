@@ -29,7 +29,7 @@ Up next&amp;hellip; I need to do a bit of yak-shaving. As I alluded to before, I
       <guid>https://batasrki.github.io/posts/2015-12-19-experiments-part-6/</guid>
       <description>Previously in Experiments, part 5,&amp;hellip; I added a synchronous way of fetching a title from an HTML page, using Enlive.
 Let&amp;rsquo;s async this thing OK, I want to get the quick response back, but still keep this new functionality. This is where I introduce core.async.
-;; in project.clj [org.clojure/core.async &amp;quot;0.2.374&amp;quot;] ;; in handler.clj&#39;s require (:require [clojure.core.async :as async :refer [&amp;gt;! &amp;lt; ! chan go]])  This library is based on concepts presented in a book called Communicating Sequential Processes.</description>
+;; in project.clj [org.clojure/core.async &amp;#34;0.2.374&amp;#34;] ;; in handler.clj&amp;#39;s require (:require [clojure.core.async :as async :refer [&amp;gt;! &amp;lt; ! chan go]]) This library is based on concepts presented in a book called Communicating Sequential Processes.</description>
     </item>
     
     <item>

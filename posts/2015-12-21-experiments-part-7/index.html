@@ -43,7 +43,7 @@ Up next&hellip; I need to do a bit of yak-shaving. As I alluded to before, I wan
 
 <meta itemprop="datePublished" content="2015-12-21T21:52:24-05:00" />
 <meta itemprop="dateModified" content="2015-12-21T21:52:24-05:00" />
-<meta itemprop="wordCount" content="717">
+<meta itemprop="wordCount" content="715">
 
 
 
@@ -130,134 +130,122 @@ Up next&hellip; I need to do a bit of yak-shaving. As I alluded to before, I wan
 </code></pre>
 
 <p>This goes and does things and now I have a new directory. I now need to copy over bits from <code>project.clj</code>, the whole <code>server.clj</code> and <code>service.clj</code>, the <code>config</code>, <code>log</code>, and <code>target</code> directories. Then, in the new <code>service.clj</code> file, I need to copy over the code from <code>handler.clj</code>. All in all, this is how the project and service files look like.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure project.clj" data-lang="clojure project.clj">(<span style="color:#66d9ef">defproject </span>blog-post-app <span style="color:#e6db74">&#34;0.0.1&#34;</span>
+  <span style="color:#e6db74">:description</span> <span style="color:#e6db74">&#34;ReactJS bookmarker backed by experimental Clojure stuff&#34;</span>
+  <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;http://particletransporter.io&#34;</span>
+  <span style="color:#e6db74">:min-lein-version</span> <span style="color:#e6db74">&#34;2.0.0&#34;</span>
+  <span style="color:#e6db74">:dependencies</span> [[org.clojure/clojure <span style="color:#e6db74">&#34;1.7.0&#34;</span>]
+                 [org.clojure/data.json <span style="color:#e6db74">&#34;0.2.6&#34;</span>]
+                 [org.clojure/core.async <span style="color:#e6db74">&#34;0.2.374&#34;</span>]
+                 <span style="color:#75715e">;;[compojure &#34;1.4.0&#34;]</span>
 
-<pre><code class="language-clojure">(defproject blog-post-app &quot;0.0.1&quot;
-  :description &quot;ReactJS bookmarker backed by experimental Clojure stuff&quot;
-  :url &quot;http://particletransporter.io&quot;
-  :min-lein-version &quot;2.0.0&quot;
-  :dependencies [[org.clojure/clojure &quot;1.7.0&quot;]
-                 [org.clojure/data.json &quot;0.2.6&quot;]
-                 [org.clojure/core.async &quot;0.2.374&quot;]
-                 ;;[compojure &quot;1.4.0&quot;]
+                 [io.pedestal/pedestal.service <span style="color:#e6db74">&#34;0.4.1&#34;</span>]
+                 [io.pedestal/pedestal.jetty <span style="color:#e6db74">&#34;0.4.1&#34;</span>]
+                 [ch.qos.logback/logback-classic <span style="color:#e6db74">&#34;1.1.3&#34;</span> <span style="color:#e6db74">:exclusions</span> [org.slf4j/slf4j-api]]
+                 [org.slf4j/jul-to-slf4j <span style="color:#e6db74">&#34;1.7.12&#34;</span>]
+                 [org.slf4j/jcl-over-slf4j <span style="color:#e6db74">&#34;1.7.12&#34;</span>]
+                 [org.slf4j/log4j-over-slf4j <span style="color:#e6db74">&#34;1.7.12&#34;</span>]
 
-                 [io.pedestal/pedestal.service &quot;0.4.1&quot;]
-                 [io.pedestal/pedestal.jetty &quot;0.4.1&quot;]
-                 [ch.qos.logback/logback-classic &quot;1.1.3&quot; :exclusions [org.slf4j/slf4j-api]]
-                 [org.slf4j/jul-to-slf4j &quot;1.7.12&quot;]
-                 [org.slf4j/jcl-over-slf4j &quot;1.7.12&quot;]
-                 [org.slf4j/log4j-over-slf4j &quot;1.7.12&quot;]
+                 [enlive <span style="color:#e6db74">&#34;1.1.5&#34;</span>]
+                 [hiccup <span style="color:#e6db74">&#34;1.0.5&#34;</span>]]
+  <span style="color:#e6db74">:resource-paths</span> [<span style="color:#e6db74">&#34;config&#34;</span> <span style="color:#e6db74">&#34;resources&#34;</span>]
+  <span style="color:#e6db74">:uberjar-name</span> <span style="color:#e6db74">&#34;blog-post-app.jar&#34;</span>
+  <span style="color:#e6db74">:profiles</span>
+  {<span style="color:#e6db74">:dev</span> {<span style="color:#e6db74">:dependencies</span> [[io.pedestal/pedestal.service-tools <span style="color:#e6db74">&#34;0.4.1&#34;</span>]
+                        [cider/cider-nrepl <span style="color:#e6db74">&#34;0.10.0&#34;</span>]]}
+   <span style="color:#e6db74">:uberjar</span> {<span style="color:#e6db74">:aot</span> [blog-post-app.server]}}
+  <span style="color:#e6db74">:main</span> <span style="color:#f92672">^</span>{<span style="color:#e6db74">:skip-aot</span> true} blog-post-app.server)</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure service.clj" data-lang="clojure service.clj">(<span style="color:#66d9ef">ns </span>blog-post-app.service
+  (<span style="color:#e6db74">:require</span> [io.pedestal.http <span style="color:#e6db74">:as</span> bootstrap]
+            [io.pedestal.http.route <span style="color:#e6db74">:as</span> route]
+            [io.pedestal.http.body-params <span style="color:#e6db74">:as</span> body-params]
+            [io.pedestal.http.route.definition <span style="color:#e6db74">:refer</span> [defroutes]]
+            [io.pedestal.log <span style="color:#e6db74">:as</span> log]
+            [ring.util.response <span style="color:#e6db74">:as</span> ring-resp]
+            [clojure.data.json <span style="color:#e6db74">:as</span> json]
+            [clojure.core.async <span style="color:#e6db74">:as</span> async <span style="color:#e6db74">:refer</span> [&gt;! &lt;! go chan]]
+            [net.cgrand.enlive-html <span style="color:#e6db74">:as</span> html]
+            [blog-post-app.views <span style="color:#e6db74">:as</span> views]))
 
-                 [enlive &quot;1.1.5&quot;]
-                 [hiccup &quot;1.0.5&quot;]]
-  :resource-paths [&quot;config&quot; &quot;resources&quot;]
-  :uberjar-name &quot;blog-post-app.jar&quot;
-  :profiles
-  {:dev {:dependencies [[io.pedestal/pedestal.service-tools &quot;0.4.1&quot;]
-                        [cider/cider-nrepl &quot;0.10.0&quot;]]}
-   :uberjar {:aot [blog-post-app.server]}}
-  :main ^{:skip-aot true} blog-post-app.server)
-</code></pre>
+(<span style="color:#66d9ef">def </span>links (atom <span style="color:#f92672">&#39;</span>({<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">1</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://google.ca&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Google&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-01&#34;</span>}
+                   {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">2</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://twitter.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Twitter&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-01&#34;</span>}
+                   {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">3</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://github.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Github&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>}
+                   {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">4</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://www.shopify.ca&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Shopify&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>}
+                   {<span style="color:#e6db74">:id</span> <span style="color:#ae81ff">5</span> <span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://www.youtube.com&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;YouTube&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-08&#34;</span>})))
 
-<pre><code class="language-clojure">(ns blog-post-app.service
-  (:require [io.pedestal.http :as bootstrap]
-            [io.pedestal.http.route :as route]
-            [io.pedestal.http.body-params :as body-params]
-            [io.pedestal.http.route.definition :refer [defroutes]]
-            [io.pedestal.log :as log]
-            [ring.util.response :as ring-resp]
-            [clojure.data.json :as json]
-            [clojure.core.async :as async :refer [&gt;! &lt;! go chan]]
-            [net.cgrand.enlive-html :as html]
-            [blog-post-app.views :as views]))
-
-(def links (atom '({:id 1 :url &quot;https://google.ca&quot; :title &quot;Google&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
-                   {:id 2 :url &quot;https://twitter.com&quot; :title &quot;Twitter&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
-                   {:id 3 :url &quot;https://github.com&quot; :title &quot;Github&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
-                   {:id 4 :url &quot;https://www.shopify.ca&quot; :title &quot;Shopify&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;}
-                   {:id 5 :url &quot;https://www.youtube.com&quot; :title &quot;YouTube&quot; :client &quot;static&quot; :created_at &quot;2015-12-08&quot;})))
-
-(defn fetch-url [url]
+(<span style="color:#66d9ef">defn </span>fetch-url [url]
   (with-open [inputstream (-&gt; (java.net.URL. url)
                               .openConnection
-                              (doto (.setRequestProperty &quot;User-Agent&quot;
-                                                         &quot;ReadLaterCrawler/1.0 ...&quot;))
+                              (doto (.setRequestProperty <span style="color:#e6db74">&#34;User-Agent&#34;</span>
+                                                         <span style="color:#e6db74">&#34;ReadLaterCrawler/1.0 ...&#34;</span>))
                               .getContent)]
     (html/html-resource inputstream)))
 
-(defn get-title [url]
-  (first (map html/text (html/select (fetch-url url) [:title]))))
+(<span style="color:#66d9ef">defn </span>get-title [url]
+  (first (map html/text (html/select (fetch-url url) [<span style="color:#e6db74">:title</span>]))))
 
-(def request-chan (chan))
-(def title-chan (chan))
+(<span style="color:#66d9ef">def </span>request-chan (chan))
+(<span style="color:#66d9ef">def </span>title-chan (chan))
 
-(defn update-title [data record]
-  (map #(if (= (:id record) (:id %))
-          (assoc % :title (:title record))
+(<span style="color:#66d9ef">defn </span>update-title [data record]
+  (map <span style="color:#f92672">#</span>(<span style="color:#66d9ef">if </span>(= (<span style="color:#e6db74">:id</span> record) (<span style="color:#e6db74">:id</span> %))
+          (assoc % <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:title</span> record))
           %) data))
-(defn update-atom []
+(<span style="color:#66d9ef">defn </span>update-atom []
   (go
-   (let [record (&lt;! title-chan)]
-     (log/trace &quot;Got title&quot; (:title record))
-     (log/trace &quot;Updating the atom&quot;)
+   (<span style="color:#66d9ef">let </span>[record (&lt;! title-chan)]
+     (log/trace <span style="color:#e6db74">&#34;Got title&#34;</span> (<span style="color:#e6db74">:title</span> record))
+     (log/trace <span style="color:#e6db74">&#34;Updating the atom&#34;</span>)
      (swap! links update-title record))))
 
-(defn async-get-title []
+(<span style="color:#66d9ef">defn </span>async-get-title []
   (go
-   (let [record (&lt;! request-chan)]
-     (log/trace &quot;Got the request, processing....&quot;)
-     (&gt;! title-chan (assoc record :title (get-title (:url record)))))))
+   (<span style="color:#66d9ef">let </span>[record (&lt;! request-chan)]
+     (log/trace <span style="color:#e6db74">&#34;Got the request, processing....&#34;</span>)
+     (&gt;! title-chan (assoc record <span style="color:#e6db74">:title</span> (get-title (<span style="color:#e6db74">:url</span> record)))))))
 
-(defn async-request-title [new-link]
+(<span style="color:#66d9ef">defn </span>async-request-title [new-link]
   (go
-   (log/trace &quot;Putting the request on channel&quot;)
+   (log/trace <span style="color:#e6db74">&#34;Putting the request on channel&#34;</span>)
    (&gt;! request-chan new-link)))
 
-(defn home-page
+(<span style="color:#66d9ef">defn </span>home-page
   [request]
   (async-get-title)
   (update-atom)
   (ring-resp/response (views/index)))
 
-(defn list-links
+(<span style="color:#66d9ef">defn </span>list-links
   [request]
-  (ring-resp/response (json/write-str @links)))
+  (ring-resp/response (json/write-str <span style="color:#f92672">@</span>links)))
 
-(defn create-link
+(<span style="color:#66d9ef">defn </span>create-link
   [request]
-  (let [next-id (inc (apply max (map #(:id %) @links)))
-        new-link (:json-params request)
-        new-link-with-fields (assoc new-link :id next-id :title (:url new-link) :created_at &quot;2015-12-21&quot;)]
+  (<span style="color:#66d9ef">let </span>[next-id (inc (apply max (map <span style="color:#f92672">#</span>(<span style="color:#e6db74">:id</span> %) <span style="color:#f92672">@</span>links)))
+        new-link (<span style="color:#e6db74">:json-params</span> request)
+        new-link-with-fields (assoc new-link <span style="color:#e6db74">:id</span> next-id <span style="color:#e6db74">:title</span> (<span style="color:#e6db74">:url</span> new-link) <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-21&#34;</span>)]
     (async-request-title new-link-with-fields)
     (swap! links conj new-link-with-fields)
-    (ring-resp/response (json/write-str @links))))
+    (ring-resp/response (json/write-str <span style="color:#f92672">@</span>links))))
 
 (defroutes routes
-  ;; Defines &quot;/&quot; and &quot;/about&quot; routes with their associated :get
-  ;; handlers.
-  ;; The interceptors defined after the verb map (e.g., {:get
-  ;; home-page}
-  ;; apply to / and its children (/about).
-  [[[&quot;/&quot; {:get home-page}
-     ^:interceptors [(body-params/body-params) bootstrap/html-body]
-     [&quot;/about&quot; {:get about-page}]
-     [&quot;/api/links&quot; {:get list-links
-                    :post create-link}
-      ^:interceptors [bootstrap/json-body]]]]])
-(def service {:env :prod
-              ::bootstrap/routes routes
-              ::bootstrap/resource &quot;/public&quot;
-              ::bootstrap/type :jetty
-              ::bootstrap/port 8080})
-</code></pre>
-
+  <span style="color:#75715e">;; Defines &#34;/&#34; and &#34;/about&#34; routes with their associated :get</span>
+  <span style="color:#75715e">;; handlers.</span>
+  <span style="color:#75715e">;; The interceptors defined after the verb map (e.g., {:get</span>
+  <span style="color:#75715e">;; home-page}</span>
+  <span style="color:#75715e">;; apply to / and its children (/about).</span>
+  [[[<span style="color:#e6db74">&#34;/&#34;</span> {<span style="color:#e6db74">:get</span> home-page}
+     <span style="color:#f92672">^</span><span style="color:#e6db74">:interceptors</span> [(body-params/body-params) bootstrap/html-body]
+     [<span style="color:#e6db74">&#34;/about&#34;</span> {<span style="color:#e6db74">:get</span> about-page}]
+     [<span style="color:#e6db74">&#34;/api/links&#34;</span> {<span style="color:#e6db74">:get</span> list-links
+                    <span style="color:#e6db74">:post</span> create-link}
+      <span style="color:#f92672">^</span><span style="color:#e6db74">:interceptors</span> [bootstrap/json-body]]]]])
+(<span style="color:#66d9ef">def </span>service {<span style="color:#e6db74">:env</span> <span style="color:#e6db74">:prod</span>
+              <span style="color:#e6db74">::bootstrap/routes</span> routes
+              <span style="color:#e6db74">::bootstrap/resource</span> <span style="color:#e6db74">&#34;/public&#34;</span>
+              <span style="color:#e6db74">::bootstrap/type</span> <span style="color:#e6db74">:jetty</span>
+              <span style="color:#e6db74">::bootstrap/port</span> <span style="color:#ae81ff">8080</span>})</code></pre></div>
 <p>With that, I start the REPL and run the server from it.</p>
-
-<pre><code class="language-bash">lein repl
-</code></pre>
-
-<pre><code class="language-clojure">(server/start runnable-service)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">lein repl</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure REPL" data-lang="clojure REPL">(server/start runnable-service)</code></pre></div>
 <h2 id="a-proof-in-form-of-a-gif">A proof in form of a GIF</h2>
 
 <p><img src="/images/pedestal.gif" alt="pedestal" /></p>

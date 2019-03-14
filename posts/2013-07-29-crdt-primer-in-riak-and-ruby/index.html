@@ -140,13 +140,10 @@ $ touch Gemfile tester.rb
 </code></pre>
 
 <p>Next, let&rsquo;s add the Ruby Riak client gem and a JSON gem.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby Gemfile" data-lang="ruby Gemfile">source &#39;https://rubygems.org&#39;
 
-<pre><code class="language-ruby">source 'https://rubygems.org'
-
-gem 'yajl-ruby'
-gem 'riak-client'
-</code></pre>
-
+gem &#39;yajl-ruby&#39;
+gem &#39;riak-client&#39;</code></pre></div>
 <p>Let&rsquo;s install those and we will be off and running:</p>
 
 <pre><code>$ bundle install
@@ -157,26 +154,22 @@ gem 'riak-client'
 <p>The two-phase-set CRDT is interesting, because it allows us to add and remove things from a set while never actually deleting data. It also prevents re-insertion of deleted elements, which can come in handy.</p>
 
 <p>Let&rsquo;s first set up a playground.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby tester.rb" data-lang="ruby tester.rb">require_relative <span style="color:#e6db74">&#39;vendor/lib/meangirls.rb&#39;</span>
+require <span style="color:#e6db74">&#39;yajl&#39;</span>
+require <span style="color:#e6db74">&#39;riak&#39;</span>
 
-<pre><code class="language-ruby">require_relative 'vendor/lib/meangirls.rb'
-require 'yajl'
-require 'riak'
-
-client = Riak::Client.new(:nodes =&gt; [
-                          {:host =&gt; &quot;33.33.33.11&quot;, :http_port =&gt; 8111},
-                          {:host =&gt; &quot;33.33.33.12&quot;, :http_port =&gt; 8112},
-                          {:host =&gt; &quot;33.33.33.13&quot;, :http_port =&gt; 8113}
-                          ])
-bucket = client.bucket 'meangirls'
-bucket.allow_mult = true
-p bucket.props
-</code></pre>
-
+client <span style="color:#f92672">=</span> <span style="color:#66d9ef">Riak</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Client</span><span style="color:#f92672">.</span>new(<span style="color:#e6db74">:nodes</span> <span style="color:#f92672">=&gt;</span> <span style="color:#f92672">[</span>
+                          {<span style="color:#e6db74">:host</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#34;33.33.33.11&#34;</span>, <span style="color:#e6db74">:http_port</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">8111</span>},
+                          {<span style="color:#e6db74">:host</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#34;33.33.33.12&#34;</span>, <span style="color:#e6db74">:http_port</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">8112</span>},
+                          {<span style="color:#e6db74">:host</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#34;33.33.33.13&#34;</span>, <span style="color:#e6db74">:http_port</span> <span style="color:#f92672">=&gt;</span> <span style="color:#ae81ff">8113</span>}
+                          <span style="color:#f92672">]</span>)
+bucket <span style="color:#f92672">=</span> client<span style="color:#f92672">.</span>bucket <span style="color:#e6db74">&#39;meangirls&#39;</span>
+bucket<span style="color:#f92672">.</span>allow_mult <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>
+p bucket<span style="color:#f92672">.</span>props</code></pre></div>
 <p>We load in the library and the two supporting gems. We then hook up to a Riak cluster and create a bucket for our data.</p>
 
 <p>Let&rsquo;s open up irb and write some code.</p>
-
-<pre><code class="language-ruby">require './tester.rb'
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">require &#39;./tester.rb&#39;
 twop_set = Meangirls::TwoPhaseSet.new
 
 twop_set.add :alpha
@@ -184,41 +177,35 @@ twop_set.add :alpha
 twop_set.add :beta
  =&gt; #&lt;Meangirls::TwoPhaseSet:0x007fd7549680b0 @a=#&lt;Set: {:alpha, :beta}&gt;, @r=#&lt;Set: {}&gt;&gt;
 twop_set.to_json
- =&gt; &quot;{\&quot;type\&quot;:\&quot;2p-set\&quot;,\&quot;a\&quot;:[\&quot;alpha\&quot;,\&quot;beta\&quot;],\&quot;r\&quot;:[]}&quot;
+ =&gt; &#34;{\&#34;type\&#34;:\&#34;2p-set\&#34;,\&#34;a\&#34;:[\&#34;alpha\&#34;,\&#34;beta\&#34;],\&#34;r\&#34;:[]}&#34;
  twop_set.delete :alpha
   =&gt; :alpha
 twop_set.to_json
- =&gt; &quot;{\&quot;type\&quot;:\&quot;2p-set\&quot;,\&quot;a\&quot;:[\&quot;alpha\&quot;,\&quot;beta\&quot;],\&quot;r\&quot;:[\&quot;alpha\&quot;]}&quot;
+ =&gt; &#34;{\&#34;type\&#34;:\&#34;2p-set\&#34;,\&#34;a\&#34;:[\&#34;alpha\&#34;,\&#34;beta\&#34;],\&#34;r\&#34;:[\&#34;alpha\&#34;]}&#34;
  twop_set.add :alpha
  Meangirls::ReinsertNotAllowed: Meangirls::ReinsertNotAllowed
-  from /Users/spejic/code/crdt-post/vendor/lib/meangirls/two_phase_set.rb:25:in '&lt;&lt;'
+  from /Users/spejic/code/crdt-post/vendor/lib/meangirls/two_phase_set.rb:25:in &#39;&lt;&lt;&#39;
   from (irb):15
-  from /Users/spejic/.rvm/rubies/ruby-2.0.0-p195/bin/irb:16:in '&lt;main&gt;'
-</code></pre>
-
+  from /Users/spejic/.rvm/rubies/ruby-2.0.0-p195/bin/irb:16:in &#39;&lt;main&gt;&#39;</code></pre></div>
 <p>As we can see, we can add elements to the set, remove elements from the set (by adding them to the remove set), get a JSON representation of the merge between the <em>add</em> and <em>remove</em> sets and we are prevented from re-adding a deleted element to the whole thing. The last part makes sense, because we didn&rsquo;t actually delete the element, it&rsquo;s still there in the <em>add</em> set. How would we add the same element again if we never removed it?</p>
 
 <p>Before explaining why we&rsquo;re using this CRDT, let&rsquo;s first come up with a way to store the data.</p>
 
 <p>Let&rsquo;s create an empty two phase set and store that in Riak.</p>
-
-<pre><code class="language-ruby">twop_set = Meangirls::TwoPhaseSet.new
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">twop_set = Meangirls::TwoPhaseSet.new
 data_object = bucket.new
 data_object.raw_data = twop_set.to_json
 data_object.store
-=&gt; #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[], &quot;r&quot;=&gt;[]}&gt;]&gt;
-</code></pre>
-
+=&gt; #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&#34;type&#34;=&gt;&#34;2p-set&#34;, &#34;a&#34;=&gt;[], &#34;r&#34;=&gt;[]}&gt;]&gt;</code></pre></div>
 <p>OK, the set is stored. One of the usual patterns used while developing Riak-backed applications is to store the keys in something like Redis or memcache. This allows the developers to access the data quickly, since key-based access is the fastest type of data access in Riak.</p>
 
 <p>However, this also opens up the possibility that two distinct sets of data will be written to the same key. This is exactly what a CRDT aims to prevent.</p>
 
 <p>Let&rsquo;s simulate that possibility and see how <em>meangirls</em> handles it.</p>
-
-<pre><code class="language-ruby">fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby irb" data-lang="ruby irb">fetch_object = bucket.get &#39;7ELYcWLmeoaiphhgCjyemyz54JB&#39;
 
 # fetch another object
-another_fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+another_fetch_object = bucket.get &#39;7ELYcWLmeoaiphhgCjyemyz54JB&#39;
 
 # make sets
 set_from_first = Meangirls::TwoPhaseSet.new(fetch_object.data)
@@ -236,7 +223,7 @@ another_fetch_object.raw_data = set_from_second.to_json
 another_fetch_object.store
 
 # fetch the conflicts and merge them
-fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+fetch_object = bucket.get &#39;7ELYcWLmeoaiphhgCjyemyz54JB&#39;
 fetch_object.conflict?
 =&gt; true
 
@@ -244,22 +231,20 @@ conflicted_parts = fetch_object.siblings.map do |sibling|
   Meangirls::TwoPhaseSet.new(sibling.data)
 end
 =&gt; [#&lt;Meangirls::TwoPhaseSet:0x0000000309d898 
-            @a=#&lt;Set: {&quot;beta&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
-    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
+            @a=#&lt;Set: {&#34;beta&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
+    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&#34;alpha&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
 
 resolved = conflicted_parts.first.merge(conflicted_parts.last)
 =&gt; #&lt;Meangirls::TwoPhaseSet:0x00000003501c90
-    @a=#&lt;Set: {&quot;beta&quot;, &quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;
+    @a=#&lt;Set: {&#34;beta&#34;, &#34;alpha&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;
 
 # write the merged object back
 resolved_data_object = Riak::RObject.new(bucket, fetch_object.key)
 resolved_data_object.raw_data = resolved.to_json
-resolved_data_object.content_type = &quot;application/json&quot;
+resolved_data_object.content_type = &#34;application/json&#34;
 
 fetch_object.siblings = [resolved_data_object]
-fetch_object.store
-</code></pre>
-
+fetch_object.store</code></pre></div>
 <p>We did a few things here, so let&rsquo;s break it down. Firstly, fetching the same object out of Riak twice will ensure that we have to references to the same <strong>vector clock</strong> value. <a href="http://docs.basho.com/riak/latest/theory/concepts/Vector-Clocks/">Vector clocks</a> are how a distributed system like Riak keeps track of object updates in the system.</p>
 
 <p>Having the same vector clock on 2 in-memory instances of our Riak object means that were both of them to write updates to that object, we would have a conflict. The default way Riak handles conflicts is by using the <em>last write wins</em> strategy, which is determined by the timestamp of the write coming into the system. All previous writes are discarded in that case, potentially losing information.</p>
@@ -271,32 +256,25 @@ fetch_object.store
 <p>Upon the next read, we are presented with those conflicts. The Ruby client for Riak does a nice thing here and keeps things coherent by encapsulating those conflicts into the <em>Riak::RObject</em> instance.</p>
 
 <p>Accessing any field on this conflicted instance before resolving the conflicts will result in an exception, forcing us to resolve the conflicts before proceeding.</p>
-
-<pre><code class="language-ruby">fetch_object = bucket.get '7ELYcWLmeoaiphhgCjyemyz54JB'
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby conflicted" data-lang="ruby conflicted">fetch_object = bucket.get &#39;7ELYcWLmeoaiphhgCjyemyz54JB&#39;
 fetch_object.conflict?
 =&gt; true
 fetch_object.data
-#=&gt; Riak::Conflict: The object is in conflict (has siblings) and cannot be treated singly or saved: #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[&quot;beta&quot;], &quot;r&quot;=&gt;[]}&gt;, #&lt;Riak::RContent [application/json]:{&quot;type&quot;=&gt;&quot;2p-set&quot;, &quot;a&quot;=&gt;[&quot;alpha&quot;], &quot;r&quot;=&gt;[]}&gt;]&gt;
-  from /home/srdjan/.rvm/gems/ruby-2.0.0-p195@crdt-post/gems/riak-client-1.2.0/lib/riak/robject.rb:169:in `content'
+#=&gt; Riak::Conflict: The object is in conflict (has siblings) and cannot be treated singly or saved: #&lt;Riak::RObject {meangirls,7ELYcWLmeoaiphhgCjyemyz54JB} [#&lt;Riak::RContent [application/json]:{&#34;type&#34;=&gt;&#34;2p-set&#34;, &#34;a&#34;=&gt;[&#34;beta&#34;], &#34;r&#34;=&gt;[]}&gt;, #&lt;Riak::RContent [application/json]:{&#34;type&#34;=&gt;&#34;2p-set&#34;, &#34;a&#34;=&gt;[&#34;alpha&#34;], &#34;r&#34;=&gt;[]}&gt;]&gt;
+  from /home/srdjan/.rvm/gems/ruby-2.0.0-p195@crdt-post/gems/riak-client-1.2.0/lib/riak/robject.rb:169:in `content&#39;
   from (irb):91
-  from /home/srdjan/.rvm/rubies/ruby-2.0.0-p195/bin/irb:13:in `&lt;main&gt;'
-</code></pre>
-
+  from /home/srdjan/.rvm/rubies/ruby-2.0.0-p195/bin/irb:13:in `&lt;main&gt;&#39;</code></pre></div>
 <p>So, we have conflicts and need to resolve them. The conflicted objects are presented as a collection of <em>siblings</em>. We loop through the collection and create <em>TwoPhaseSet</em> objects out of each one and add them to a collection of their own. We only have 2 conflicts here, so I cheated a bit on how they merge together, but I hope that the intent is clear.</p>
-
-<pre><code class="language-ruby">conflicted_parts = fetch_object.siblings.map do |sibling|
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby resolve conflicts" data-lang="ruby resolve conflicts">conflicted_parts = fetch_object.siblings.map do |sibling|
   Meangirls::TwoPhaseSet.new(sibling.data)
 end
 =&gt; [#&lt;Meangirls::TwoPhaseSet:0x0000000309d898 
-            @a=#&lt;Set: {&quot;beta&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
-    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
+            @a=#&lt;Set: {&#34;beta&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;,
+    #&lt;Meangirls::TwoPhaseSet:0x0000000309d578 @a=#&lt;Set: {&#34;alpha&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;]
 
 resolved = conflicted_parts.first.merge(conflicted_parts.last)
 =&gt; #&lt;Meangirls::TwoPhaseSet:0x00000003501c90
-    @a=#&lt;Set: {&quot;beta&quot;, &quot;alpha&quot;}&gt;, @r=#&lt;Set: {}&gt;&gt;
-
-</code></pre>
-
+    @a=#&lt;Set: {&#34;beta&#34;, &#34;alpha&#34;}&gt;, @r=#&lt;Set: {}&gt;&gt;</code></pre></div>
 <p>The last part of the conflict resolution is tricky and under-documented. I only have two tweets from <a href="https://twitter.com/seancribbs">Sean Cribbs</a> to go on.</p>
 
 <blockquote>
@@ -310,16 +288,13 @@ resolved = conflicted_parts.first.merge(conflicted_parts.last)
 </blockquote>
 
 <p>I, honestly, could not find any other information on this part, so what I&rsquo;m presenting is probably not the best way. It does work, however.</p>
-
-<pre><code class="language-ruby"># write the merged object back
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby create a new object" data-lang="ruby create a new object"># write the merged object back
 resolved_data_object = Riak::RObject.new(bucket, fetch_object.key)
 resolved_data_object.raw_data = resolved.to_json
-resolved_data_object.content_type = &quot;application/json&quot;
+resolved_data_object.content_type = &#34;application/json&#34;
 
 fetch_object.siblings = [resolved_data_object]
-fetch_object.store
-</code></pre>
-
+fetch_object.store</code></pre></div>
 <p>What we&rsquo;re doing here is creating a new <em>Riak::RObject</em> instance, but setting its key to be the same as the conflicted object. This ensures that we update the data in Riak rather than create a new copy of it.</p>
 
 <p>We then set that object&rsquo;s <em>raw_data</em> property to the resolved set we created earlier and its <em>content type</em> to JSON. We don&rsquo;t store this object, instead we overwrite the conflicted object&rsquo;s siblings collection with a list of size 1 containing the new object.</p>

@@ -125,44 +125,32 @@ In tonight&rsquo;s installment&hellip; Firstly, I&rsquo;m going to fix up the tr
 <p>OK, so, <a href="http://facebook.github.io/react/docs/tutorial.html">ReactJS tutorial site</a> is a bit misleading. I am guessing they expect me to use straight-up HTML and add the <code>text/babel</code> script tag. However, I don&rsquo;t know how to do that through Hiccup. Moreover, that seems a bit weird, anyway. There&rsquo;s a way to do it without using the specialized tag, but it&rsquo;ll take a bit more effort.</p>
 
 <p>Using the <a href="http://facebook.github.io/react/docs/getting-started.html#offline-transform">Offline transform section</a> of the Getting Started page, I&rsquo;m going to&hellip;ugh&hellip;install an NPM module <em>globally</em> (seriously, tho?) and use it to transform my <code>core.js</code> JSX joint into a pure JavaScript file.</p>
-
-<pre><code class="language-bash">$ npm install -g babel-cli babel-preset-react
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ npm install -g babel-cli babel-preset-react
 $ cd resources/public/js
 $ mkdir build
-$ babel --presets react core.js --watch --out-dir build
-</code></pre>
-
+$ babel --presets react core.js --watch --out-dir build</code></pre></div>
 <p>Now that <code>babel</code> is transpiling my JSX into compatible JS, I need to adjust where I look for that JS file.</p>
-
-<pre><code class="language-clojure">(include-js &quot;/js/build/core.js&quot;)
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(include-js <span style="color:#e6db74">&#34;/js/build/core.js&#34;</span>)</code></pre></div>
 <p>Running <code>lein ring server</code> opens up a browser tab pointing to <a href="http://localhost:3000">http://localhost:3000</a>. As usual, I immediately open the Web Inspector tab and notice the following error: <code>ReferenceError: LinkList is not defined</code>. This is good news! It means that the JSX was successfully transpiled into JS and the browser has attempted to build a ReactJS component.</p>
 
 <p>I&rsquo;m going to fix the error quickly, by adding the missing component, which is just an empty table tag, for now.</p>
-
-<pre><code class="language-javascript">var LinkList = React.createClass({
-  render: function() {
-    return (
-      &lt;table&gt;&lt;/table&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkList</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+    <span style="color:#66d9ef">return</span> (
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">table</span><span style="color:#f92672">&gt;&lt;</span><span style="color:#960050;background-color:#1e0010">/table&gt;</span>
     );
   }
 });
-</code></pre>
-
+</code></pre></div>
 <p>Cool. That brings the next error, <code>TypeError: this.state is null</code>. If you recall, that&rsquo;s from the following line:</p>
-
-<pre><code class="language-javascript">&lt;LinkList data = {this.state.data} /&gt;
-</code></pre>
-
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">LinkList</span> <span style="color:#a6e22e">data</span> <span style="color:#f92672">=</span> {<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">state</span>.<span style="color:#a6e22e">data</span>} <span style="color:#960050;background-color:#1e0010">/&gt;</span>
+</code></pre></div>
 <p>It makes sense, I didn&rsquo;t initalise the state to anything, but I want an element of it, <code>data</code>. That&rsquo;s fine, I can set it to something empty. ReactJS has a handy function, called <code>getInitialState</code> that I can use to set&hellip;well, the initial state for each component.</p>
-
-<pre><code class="language-javascript">// This is done on the outer component, LinkListContainer
-getInitialState: function() {
-  return { data: [] };
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#75715e">// This is done on the outer component, LinkListContainer
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">getInitialState</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+  <span style="color:#66d9ef">return</span> { <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> [] };
 }
-</code></pre>
-
+</code></pre></div>
 <p>And with that, no more errors in Web Inspector console!</p>
 
 <h2 id="an-interlude">An interlude</h2>
@@ -174,48 +162,40 @@ getInitialState: function() {
 <h2 id="continuing">Continuing&hellip;.</h2>
 
 <p>Back in Clojure-land, I&rsquo;m going to get the <code>api/links</code> route working. Initially, it&rsquo;ll just deliver a static list of links, each link being a hashmap. The nice thing about Clojure and its libraries is consistency of data structures. Querying a database returns a hashmap representation of a record. That representation is easily turned into a JSON response, which is itself a hashmap!</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure"><span style="color:#75715e">;; in require, need to add a JSON library</span>
+(<span style="color:#e6db74">:require</span> [clojure.data.json <span style="color:#e6db74">:as</span> json])
 
-<pre><code class="language-clojure">;; in require, need to add a JSON library
-(:require [clojure.data.json :as json])
-
-;; appending a route to defroutes
-(GET &quot;/api/links&quot; []
-  (let [links '({:url &quot;https://google.ca&quot; :title &quot;Google&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;}
-                {:url &quot;https://twitter.com :title &quot;Twitter&quot; :client &quot;static&quot; :created_at &quot;2015-12-01&quot;})]
-    (json/write-str links)))
-</code></pre>
-
+<span style="color:#75715e">;; appending a route to defroutes</span>
+(GET <span style="color:#e6db74">&#34;/api/links&#34;</span> []
+  (<span style="color:#66d9ef">let </span>[links <span style="color:#f92672">&#39;</span>({<span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://google.ca&#34;</span> <span style="color:#e6db74">:title</span> <span style="color:#e6db74">&#34;Google&#34;</span> <span style="color:#e6db74">:client</span> <span style="color:#e6db74">&#34;static&#34;</span> <span style="color:#e6db74">:created_at</span> <span style="color:#e6db74">&#34;2015-12-01&#34;</span>}
+                {<span style="color:#e6db74">:url</span> <span style="color:#e6db74">&#34;https://twitter.com :title &#34;</span>Twitter<span style="color:#e6db74">&#34; :client &#34;</span>static<span style="color:#e6db74">&#34; :created_at &#34;</span><span style="color:#ae81ff">2015-12-01</span><span style="color:#960050;background-color:#1e0010">&#34;</span>})]
+    (json/write-str links)))</code></pre></div>
 <p>Giving it a quick run in the console, <code>curl -vi http://localhost:3000/api/links</code>, I see the desired results. With that done, I need to add a way to consume this data on the client and finish for tonight.</p>
 
 <p>Oh, I forgot. I need to wrap the response as JSON, otherwise things go wonky.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-clojure" data-lang="clojure">(<span style="color:#e6db74">:require</span> [ring.middleware.json <span style="color:#e6db74">:as</span> wrapper])
 
-<pre><code class="language-clojure">(:require [ring.middleware.json :as wrapper])
+<span style="color:#75715e">;; then down at the bottom</span>
 
-;; then down at the bottom
-
-(def app
+(<span style="color:#66d9ef">def </span>app
   (wrap-defaults
-    (wrapper/wrap-json-body app-routes {:keywords? true})
-    site-defaults))
-</code></pre>
-
+    (wrapper/wrap-json-body app-routes {<span style="color:#e6db74">:keywords?</span> true})
+    site-defaults))</code></pre></div>
 <h2 id="back-to-the-client">Back to the client&hellip;</h2>
 
 <p>I specified the URL to the data as a property of the outermost container. I would like to query that URL now and populate <code>this.state.data</code> variable of the component with the data from the URL. For that, I&rsquo;m going to use the <code>componentDidMount</code> function. Within, I am using the standard <code>$.ajax</code> call from jQuery and then binding the results to the <code>data</code> property of the <code>state</code> object.</p>
-
-<pre><code class="language-javascript">componentDidMount: function() {
-  $.ajax({
-    url: this.props.url,
-    dataType: &quot;json&quot;,
-    success: function(data) {
-      this.setState({ data: data });
-    }.bind(this),
-    error: function(xhr, status, err) {
-      console.error(this.props.url, status, err.toString());
-    }.bind(this)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">componentDidMount</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+  <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">ajax</span>({
+    <span style="color:#a6e22e">url</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>,
+    <span style="color:#a6e22e">dataType</span><span style="color:#f92672">:</span> <span style="color:#e6db74">&#34;json&#34;</span>,
+    <span style="color:#a6e22e">success</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">data</span>) {
+      <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">setState</span>({ <span style="color:#a6e22e">data</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">data</span> });
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>),
+    <span style="color:#a6e22e">error</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">xhr</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>) {
+      <span style="color:#a6e22e">console</span>.<span style="color:#a6e22e">error</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>, <span style="color:#a6e22e">status</span>, <span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">toString</span>());
+    }.<span style="color:#a6e22e">bind</span>(<span style="color:#66d9ef">this</span>)
 });
-</code></pre>
-
+</code></pre></div>
 <p>ReactJS frowns upon the usage of <code>=</code> as the assignment operator. Instead, I can use the <code>setState</code> function.</p>
 
 <p>Reloading the page, I still see nothing, but that&rsquo;s fine, I haven&rsquo;t built a component to consume the data. In the Network tab of Web Inspector, though, I see the API call.</p>
@@ -223,42 +203,40 @@ getInitialState: function() {
 <h2 id="last-thing-in-this-installment">Last thing in this installment&hellip;</h2>
 
 <p>So, the only thing left is render out a table of links. For that, I need to fill out the <code>LinkList</code> component and add a <code>Link</code> component. The former describes a list of links, while the latter is specific to one link record only. Old-timers reading this post will recognize as the master-detail layout.</p>
-
-<pre><code class="language-javascript">var Link = React.createClass({
-  render: function() {
-    return (
-      &lt;tr&gt;
-        &lt;td&gt;&lt;a target=&quot;_blank&quot; href={this.props.url}&gt;{this.props.title}&lt;/a&gt;&lt;/td&gt;
-        &lt;td&gt;{this.props.client}&lt;/td&gt;
-        &lt;td&gt;{this.props.created_at}&lt;/td&gt;
-      &lt;/tr&gt;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">Link</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+    <span style="color:#66d9ef">return</span> (
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">tr</span><span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">td</span><span style="color:#f92672">&gt;&lt;</span><span style="color:#a6e22e">a</span> <span style="color:#a6e22e">target</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#34;_blank&#34;</span> <span style="color:#a6e22e">href</span><span style="color:#f92672">=</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">url</span>}<span style="color:#f92672">&gt;</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">title</span>}<span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/a&gt;&lt;/td&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">td</span><span style="color:#f92672">&gt;</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">client</span>}<span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/td&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">td</span><span style="color:#f92672">&gt;</span>{<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">created_at</span>}<span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/td&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/tr&gt;</span>
     );
   }
 });
 
-var LinkList = React.createClass({
-  render: function() {
-    var linkNodes = this.props.data.map(function (link) {
-      return (&lt;Link key={link.id} title={link.title} url={link.url} client={link.client} created_at={link.created_at} /&gt;);
+<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">LinkList</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">React</span>.<span style="color:#a6e22e">createClass</span>({
+  <span style="color:#a6e22e">render</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">function</span>() {
+    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">linkNodes</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">props</span>.<span style="color:#a6e22e">data</span>.<span style="color:#a6e22e">map</span>(<span style="color:#66d9ef">function</span> (<span style="color:#a6e22e">link</span>) {
+      <span style="color:#66d9ef">return</span> (<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">Link</span> <span style="color:#a6e22e">key</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">id</span>} <span style="color:#a6e22e">title</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">title</span>} <span style="color:#a6e22e">url</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">url</span>} <span style="color:#a6e22e">client</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">client</span>} <span style="color:#a6e22e">created_at</span><span style="color:#f92672">=</span>{<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">created_at</span>} <span style="color:#960050;background-color:#1e0010">/&gt;);</span>
     });
-    return (
-      &lt;table className={&quot;table table-striped table-hover&quot;}&gt;
-        &lt;thead&gt;
-          &lt;tr&gt;
-            &lt;th&gt;URL&lt;/th&gt;
-            &lt;th&gt;From&lt;/th&gt;
-            &lt;th&gt;On&lt;/th&gt;
-          &lt;/tr&gt;
-        &lt;/thead&gt;
-        &lt;tbody&gt;
-          {linkNodes}
-        &lt;/tbody&gt;
-      &lt;/table&gt;
+    <span style="color:#66d9ef">return</span> (
+      <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">table</span> <span style="color:#a6e22e">className</span><span style="color:#f92672">=</span>{<span style="color:#e6db74">&#34;table table-striped table-hover&#34;</span>}<span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">thead</span><span style="color:#f92672">&gt;</span>
+          <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">tr</span><span style="color:#f92672">&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">th</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">URL</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/th&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">th</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">From</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/th&gt;</span>
+            <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">th</span><span style="color:#f92672">&gt;</span><span style="color:#a6e22e">On</span><span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/th&gt;</span>
+          <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/tr&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/thead&gt;</span>
+        <span style="color:#f92672">&lt;</span><span style="color:#a6e22e">tbody</span><span style="color:#f92672">&gt;</span>
+          {<span style="color:#a6e22e">linkNodes</span>}
+        <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/tbody&gt;</span>
+      <span style="color:#f92672">&lt;</span><span style="color:#960050;background-color:#1e0010">/table&gt;</span>
     );
   }
 });
-</code></pre>
-
+</code></pre></div>
 <p>I am fairly certain using that <code>map</code> function isn&rsquo;t the &ldquo;ideal&rdquo; way of building sub-components, but it works. Refreshing the tab, I see the 2 hard-coded links I added and, the UI looks like the existing UI.</p>
 
 <p>That&rsquo;s it for now, then.</p>
