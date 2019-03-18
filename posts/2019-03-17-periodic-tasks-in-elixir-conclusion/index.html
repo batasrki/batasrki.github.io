@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>(Insightful) Ramblings  | Periodic Tasks in Elixir, Conclusion</title>
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.54.0" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.955516233bcafa4d2a1c13cea63c7b50.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+
+    <meta property="og:title" content="Periodic Tasks in Elixir, Conclusion" />
+<meta property="og:description" content="Following on from the last post, I needed a way to kick off the task of periodically checking for new entries in Redis and adding them to Postgres.
+Scheduling tasks There are quite a few libraries to do this. There are also Tasks and Agents. None of these really seem to suit my problem definition.
+I don&rsquo;t need state other than the initial interval and the Redis key, so there&rsquo;s no need for an Agent." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://batasrki.github.io/posts/2019-03-17-periodic-tasks-in-elixir-conclusion/" />
+<meta property="article:published_time" content="2019-03-17T21:46:23-04:00"/>
+<meta property="article:modified_time" content="2019-03-17T21:46:23-04:00"/>
+
+<meta itemprop="name" content="Periodic Tasks in Elixir, Conclusion">
+<meta itemprop="description" content="Following on from the last post, I needed a way to kick off the task of periodically checking for new entries in Redis and adding them to Postgres.
+Scheduling tasks There are quite a few libraries to do this. There are also Tasks and Agents. None of these really seem to suit my problem definition.
+I don&rsquo;t need state other than the initial interval and the Redis key, so there&rsquo;s no need for an Agent.">
+
+
+<meta itemprop="datePublished" content="2019-03-17T21:46:23-04:00" />
+<meta itemprop="dateModified" content="2019-03-17T21:46:23-04:00" />
+<meta itemprop="wordCount" content="353">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Periodic Tasks in Elixir, Conclusion"/>
+<meta name="twitter:description" content="Following on from the last post, I needed a way to kick off the task of periodically checking for new entries in Redis and adding them to Postgres.
+Scheduling tasks There are quite a few libraries to do this. There are also Tasks and Agents. None of these really seem to suit my problem definition.
+I don&rsquo;t need state other than the initial interval and the Redis key, so there&rsquo;s no need for an Agent."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  
+  
+  <header class="cover bg-top" style="background-image: url('https://batasrki.github.io/images/periodic_task.png');">
+    <div class="pb3-m pb6-l bg-black-60">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="https://batasrki.github.io/" class="f3 fw2 hover-white no-underline white-90 dib">
+      (Insightful) Ramblings
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv6 ph3 ph4-ns">
+        
+      </div>
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+
+    <header class="mt4 w-100">
+      <p class="f6 b helvetica tracked">
+          
+        POSTS
+      </p>
+      <h1 class="f1 athelas mb1">Periodic Tasks in Elixir, Conclusion</h1>
+      
+      <time class="f6 mv4 dib tracked" datetime="2019-03-17T21:46:23-04:00">March 17, 2019</time>      
+      
+      
+    </header>
+
+    <section class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l">
+
+<p>Following on from the <a href="https://batasrki.github.io/2019-03-12-periodic-tasks-in-elixir">last post</a>, I needed a way to kick off the task of periodically checking for new entries in Redis and adding them to Postgres.</p>
+
+<h2 id="scheduling-tasks">Scheduling tasks</h2>
+
+<p>There are quite a few libraries to do this. There are also <a href="https://hexdocs.pm/elixir/Task.html"><code>Task</code>s</a> and <a href="https://hexdocs.pm/elixir/Agent.html"><code>Agent</code>s</a>. None of these really seem to suit my problem definition.</p>
+
+<p>I don&rsquo;t need state other than the initial interval and the Redis key, so there&rsquo;s no need for an <code>Agent</code>. A <code>Task</code> seems to be a way to run one-off things, which is sort of what I want. However, I need this to be a recurring task. I would also prefer not to have to add a dependency just to accomplish this simple thing.</p>
+
+<h3 id="genserver">GenServer</h3>
+
+<p>In Elixir&rsquo;s arsenal, there is a third thing that could work, the venerable <code>GenServer</code>. I can add the <code>GenServer</code> to my application supervision tree, kick it off with initial values and just let it run in the background.</p>
+
+<p>Firstly, in my <code>application.ex</code> file, I&rsquo;ll add the spec for the new process.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir"><span style="color:#75715e"># application.ex</span>
+<span style="color:#75715e"># other things are here also</span>
+worker(<span style="color:#a6e22e">Links.PeriodicImporter</span>, [[<span style="color:#e6db74">interval</span>: <span style="color:#ae81ff">1_440_000</span>, <span style="color:#e6db74">key</span>: <span style="color:#e6db74">&#34;redis:key&#34;</span>]])</code></pre></div>
+<p>This will start the process, pass in a value of 1,440,000 ms which is equal to 24 hours, the interval at which I want to check Redis for new content. It also passes in the Redis key, so this <code>GenServer</code> can be configurable.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-elixir" data-lang="elixir">defmodule <span style="color:#a6e22e">Links.PeriodicImporter</span> do
+  use <span style="color:#a6e22e">GenServer</span>
+
+  def start_link(opts) do
+    {<span style="color:#e6db74">:ok</span>, pid} <span style="color:#f92672">=</span> <span style="color:#a6e22e">GenServer</span><span style="color:#f92672">.</span>start_link(__MODULE__, opts)
+    <span style="color:#e6db74">:timer</span><span style="color:#f92672">.</span>apply_interval(opts[<span style="color:#e6db74">:interval</span>], __MODULE__, <span style="color:#e6db74">:perform</span>, [pid])
+    {<span style="color:#e6db74">:ok</span>, pid}
+  end
+
+  def init(opts) do
+    {<span style="color:#e6db74">:ok</span>, opts}
+  end
+
+  def perform(pid) do
+    <span style="color:#a6e22e">GenServer</span><span style="color:#f92672">.</span>cast(pid, <span style="color:#e6db74">:perform</span>)
+  end
+
+  def handle_cast(<span style="color:#e6db74">:perform</span>, opts) do
+    last_added_at_record <span style="color:#f92672">=</span>
+      hd(<span style="color:#a6e22e">Links.Repo</span><span style="color:#f92672">.</span>by_last_added_at(%{<span style="color:#e6db74">sort_direction</span>: <span style="color:#e6db74">:desc</span>, <span style="color:#e6db74">per_page</span>: <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">page</span>: <span style="color:#ae81ff">1</span>}))
+
+    <span style="color:#a6e22e">Links.PostgresImporter</span><span style="color:#f92672">.</span>import(opts[<span style="color:#e6db74">:key</span>], last_added_at_record<span style="color:#f92672">.</span>added_at)
+    {<span style="color:#e6db74">:noreply</span>, <span style="color:#e6db74">:ok</span>, opts}
+  end
+end</code></pre></div>
+<p>The implementation is a bit wordy, but it&rsquo;s mostly boilerplate <code>GenServer</code> code. The interesting bit is calling <code>:timer.apply_interval</code> to essentially sleep the process before invoking the <code>perform</code> function.</p>
+
+<p>The <code>handle_cast</code> contains all the business logic. I want the last record in the table and I want its <code>added_at</code> timestamp value. I can then pass that into the <code>import</code> function and let it do its work.</p>
+
+<p>It&rsquo;s a pretty simple setup and it solves the problem.</p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6">
+        
+      </div>
+    </section>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="https://batasrki.github.io/" >
+    &copy; 2019 (Insightful) Ramblings
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>
